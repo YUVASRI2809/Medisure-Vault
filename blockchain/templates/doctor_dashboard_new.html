@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="doctor-dashboard">
+    <div class="dashboard-layout">
+        <!-- Top Navigation Bar -->
+        <nav class="top-navbar">
+            <div class="top-navbar-brand">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+                MediSure Vault
+            </div>
+            <div class="top-navbar-user">
+                <div class="user-info">
+                    <div class="user-name">Dr. {{ current_user.full_name }}</div>
+                    <div class="user-role">{{ doctor_profile.specialization }}</div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Left Sidebar Navigation -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Main</div>
+                    <a href="#overview" class="sidebar-link active" onclick="showSection('overview'); return false;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                        </svg>
+                        <span>Overview</span>
+                    </a>
+                    <a href="#create" class="sidebar-link" onclick="showSection('create'); return false;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                        <span>Create Prescription</span>
+                    </a>
+                </div>
+                
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Prescriptions</div>
+                    <a href="#my-prescriptions" class="sidebar-link" onclick="showSection('my-prescriptions'); return false;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                            <rect x="9" y="3" width="6" height="4" rx="1"/>
+                        </svg>
+                        <span>My Prescriptions</span>
+                    </a>
+                    <a href="#pending" class="sidebar-link" onclick="filterByState('PENDING'); showSection('my-prescriptions'); return false;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span>Pending</span>
+                        <span class="sidebar-badge" id="pending-badge">0</span>
+                    </a>
+                    <a href="#dispensed" class="sidebar-link" onclick="filterByState('DISPENSED'); showSection('my-prescriptions'); return false;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        <span>Dispensed</span>
+                    </a>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Monitoring</div>
+                    <a href="#risk-alerts" class="sidebar-link" onclick="showSection('risk-alerts'); return false;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        <span>Risk Alerts</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Overview Section -->
+            <section id="overview-section" class="content-section">
+                <div class="content-header">
+                    <div>
+                        <h1 class="content-title">Welcome Back, Dr. {{ current_user.full_name }}</h1>
+                        <p class="content-subtitle">{{ doctor_profile.hospital }} · License: {{ doctor_profile.license_number }}</p>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="stats-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background: #e8f2fd; color: #1e6fd9;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                                    <rect x="9" y="3" width="6" height="4" rx="1"/>
+                                </svg>
+                            </div>
+                            <div class="kpi-label">Total Prescriptions</div>
+                        </div>
+                        <div class="kpi-value" id="total-prescriptions">0</div>
+                        <div class="kpi-trend">All time</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background: #fef3c7; color: #f59e0b;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </div>
+                            <div class="kpi-label">Pending Dispensing</div>
+                        </div>
+                        <div class="kpi-value" id="pending-prescriptions">0</div>
+                        <div class="kpi-trend">Awaiting pharmacy</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background: #d1fae5; color: #10b981;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </div>
+                            <div class="kpi-label">Dispensed</div>
+                        </div>
+                        <div class="kpi-value" id="dispensed-prescriptions">0</div>
+                        <div class="kpi-trend">Successfully completed</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background: #fee2e2; color: #ef4444;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                                </svg>
+                            </div>
+                            <div class="kpi-label">Locked</div>
+                        </div>
+                        <div class="kpi-value" id="locked-prescriptions">0</div>
+                        <div class="kpi-trend">Tamper detected</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Table -->
+                <div class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Recent Prescriptions</h2>
+                        <div class="table-actions">
+                            <button onclick="loadPrescriptions()" class="btn btn-sm btn-secondary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+                                    <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                                </svg>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Medication</th>
+                                    <th>Dosage</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Tamper Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-prescriptions-table">
+                                <tr><td colspan="6" class="table-empty">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Create Prescription Section -->
+            <section id="create-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1 class="content-title">Create New Prescription</h1>
+                    <p class="content-subtitle">Issue a new prescription for your patient</p>
+                </div>
+
+                <div class="section-card">
+                    <form id="prescription-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="patient-username" class="form-label">Patient Username *</label>
+                                <input type="text" id="patient-username" name="patient_username" class="form-input" required 
+                                       placeholder="Enter patient username">
+                                <small style="color: #6b7280; font-size: 0.875rem;">Patient must be registered in the system</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="medication-name" class="form-label">Medication Name *</label>
+                                <input type="text" id="medication-name" name="medication_name" class="form-input" required 
+                                       placeholder="e.g., Amoxicillin">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="dosage" class="form-label">Dosage *</label>
+                                <input type="text" id="dosage" name="dosage" class="form-input" required 
+                                       placeholder="e.g., 500mg">
+                            </div>
+                            <div class="form-group">
+                                <label for="frequency" class="form-label">Frequency *</label>
+                                <input type="text" id="frequency" name="frequency" class="form-input" required 
+                                       placeholder="e.g., 3 times daily">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="quantity" class="form-label">Quantity *</label>
+                                <input type="number" id="quantity" name="quantity" class="form-input" required min="1" 
+                                       placeholder="e.g., 30">
+                            </div>
+                            <div class="form-group">
+                                <label for="duration" class="form-label">Duration (days) *</label>
+                                <input type="number" id="duration" name="duration" class="form-input" required min="1" 
+                                       placeholder="e.g., 7">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="instructions" class="form-label">Instructions</label>
+                            <textarea id="instructions" name="instructions" class="form-input" rows="4" 
+                                      placeholder="Additional instructions for the patient..."></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem;">
+                            <button type="submit" class="btn btn-primary btn-lg">Create Prescription</button>
+                            <button type="reset" class="btn btn-secondary">Clear Form</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- My Prescriptions Section -->
+            <section id="my-prescriptions-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1 class="content-title">My Prescriptions</h1>
+                    <p class="content-subtitle">View and manage all prescriptions you've created</p>
+                </div>
+
+                <div class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Prescription List</h2>
+                        <div class="table-actions">
+                            <select id="state-filter" class="form-input" style="width: 150px;" onchange="loadFilteredPrescriptions()">
+                                <option value="">All States</option>
+                                <option value="DRAFT">Draft</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="DISPENSED">Dispensed</option>
+                                <option value="LOCKED">Locked</option>
+                            </select>
+                            <button onclick="loadFilteredPrescriptions()" class="btn btn-sm btn-secondary">Refresh</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Patient</th>
+                                    <th>Medication</th>
+                                    <th>Dosage & Frequency</th>
+                                    <th>Quantity</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Tamper</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-prescriptions-table">
+                                <tr><td colspan="8" class="table-empty">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Risk Alerts Section -->
+            <section id="risk-alerts-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1 class="content-title">Risk & Tamper Alerts</h1>
+                    <p class="content-subtitle">Monitor prescriptions with tamper detection warnings</p>
+                </div>
+
+                <div class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">High Risk Prescriptions</h2>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Patient</th>
+                                    <th>Medication</th>
+                                    <th>Status</th>
+                                    <th>Tamper Score</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody id="risk-table">
+                                <tr><td colspan="6" class="table-empty">No high-risk prescriptions</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let currentFilter = '';
+
+        // Navigation
+        function showSection(sectionName) {
+            document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            
+            document.getElementById(`${sectionName}-section`).style.display = 'block';
+            document.querySelector(`[onclick="showSection('${sectionName}'); return false;"]`)?.classList.add('active');
+        }
+
+        function filterByState(state) {
+            currentFilter = state;
+            document.getElementById('state-filter').value = state;
+        }
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/doctor/stats`);
+                if (!response.ok) throw new Error('Failed to load statistics');
+                
+                const data = await response.json();
+                document.getElementById('total-prescriptions').textContent = data.total || 0;
+                document.getElementById('pending-prescriptions').textContent = data.pending || 0;
+                document.getElementById('dispensed-prescriptions').textContent = data.dispensed || 0;
+                document.getElementById('locked-prescriptions').textContent = data.locked || 0;
+                document.getElementById('pending-badge').textContent = data.pending || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load recent prescriptions for overview
+        async function loadPrescriptions() {
+            const tbody = document.getElementById('recent-prescriptions-table');
+            tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Loading...</td></tr>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/doctor/prescriptions?limit=10`);
+                if (!response.ok) throw new Error('Failed to load prescriptions');
+                
+                const prescriptions = await response.json();
+                
+                if (prescriptions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No prescriptions found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = prescriptions.map(p => `
+                    <tr>
+                        <td><span class="table-cell-primary">${p.patient_name || 'Unknown'}</span></td>
+                        <td><span class="table-cell-primary">${p.medication_name}</span></td>
+                        <td>${p.dosage}</td>
+                        <td><span class="badge badge-${p.state.toLowerCase()}">${p.state}</span></td>
+                        <td class="table-cell-secondary">${new Date(p.created_at).toLocaleDateString()}</td>
+                        <td><span class="badge ${p.tamper_score > 50 ? 'badge-danger' : 'badge-success'}">${p.tamper_score}/100</span></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading prescriptions:', error);
+                tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Failed to load prescriptions</td></tr>';
+            }
+        }
+
+        // Load all prescriptions with filter
+        async function loadFilteredPrescriptions() {
+            const state = document.getElementById('state-filter').value;
+            const tbody = document.getElementById('all-prescriptions-table');
+            tbody.innerHTML = '<tr><td colspan="8" class="table-empty">Loading...</td></tr>';
+
+            try {
+                let url = `${API_BASE}/api/doctor/prescriptions`;
+                if (state) url += `?state=${state}`;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to load prescriptions');
+                
+                const prescriptions = await response.json();
+                
+                if (prescriptions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="table-empty">No prescriptions found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = prescriptions.map(p => `
+                    <tr>
+                        <td class="table-cell-secondary">#${p.id}</td>
+                        <td><span class="table-cell-primary">${p.patient_name || 'Unknown'}</span></td>
+                        <td><span class="table-cell-primary">${p.medication_name}</span></td>
+                        <td class="table-cell-secondary">${p.dosage} · ${p.frequency || 'N/A'}</td>
+                        <td>${p.quantity}</td>
+                        <td><span class="badge badge-${p.state.toLowerCase()}">${p.state}</span></td>
+                        <td class="table-cell-secondary">${new Date(p.created_at).toLocaleDateString()}</td>
+                        <td><span class="badge ${p.tamper_score > 50 ? 'badge-danger' : 'badge-success'}">${p.tamper_score}/100</span></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading prescriptions:', error);
+                tbody.innerHTML = '<tr><td colspan="8" class="table-empty">Failed to load prescriptions</td></tr>';
+            }
+        }
+
+        // Create prescription
+        document.getElementById('prescription-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/doctor/prescriptions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ Prescription created successfully!');
+                    e.target.reset();
+                    await loadStats();
+                    await loadPrescriptions();
+                    showSection('overview');
+                } else {
+                    alert(`❌ Error: ${result.error || 'Failed to create prescription'}`);
+                }
+            } catch (error) {
+                console.error('Error creating prescription:', error);
+                alert('❌ Failed to create prescription');
+            }
+        });
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadPrescriptions();
+        });
+    </script>
+</body>
+</html>

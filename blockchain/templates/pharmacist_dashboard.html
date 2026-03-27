@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacist Dashboard - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="pharmacist-dashboard">
+    <nav class="navbar">
+        <div class="navbar-inner" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="nav-brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="9" y1="9" x2="15" y2="9"/>
+                    <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+                MediSure Vault - Pharmacist Portal
+            </div>
+            <div class="nav-links">
+                <a href="{{ url_for('dashboard') }}" class="active">Dashboard</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <div>
+                <h1>Welcome, {{ current_user.full_name }}</h1>
+                <p class="subtitle">{{ pharmacist_profile.pharmacy_name }} | {{ pharmacist_profile.location }}</p>
+                <p class="subtitle">License: {{ pharmacist_profile.license_number }}</p>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="pending-count">0</div>
+                    <div class="stat-label">Pending Dispensing</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="dispensed-today">0</div>
+                    <div class="stat-label">Dispensed Today</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="dispensed-total">0</div>
+                    <div class="stat-label">Total Dispensed</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔐</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="active-tokens">0</div>
+                    <div class="stat-label">Active Tokens</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verify Access Token Section -->
+        <div class="section-card">
+            <h2>🔑 Verify Access Token</h2>
+            <form id="token-verify-form" class="token-form">
+                <div class="form-row">
+                    <div class="form-group flex-grow">
+                        <label for="access-token">Access Token *</label>
+                        <input type="text" id="access-token" name="token" required 
+                               placeholder="Enter patient's access token">
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary">Verify Token</button>
+                    </div>
+                </div>
+            </form>
+            <div id="token-result" class="token-result" style="display: none;"></div>
+        </div>
+
+        <!-- Pending Prescriptions for Dispensing -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>⏳ Pending Prescriptions</h2>
+                <button onclick="loadPendingPrescriptions()" class="btn btn-small">🔄 Refresh</button>
+            </div>
+            
+            <div id="pending-prescriptions" class="prescriptions-list">
+                <div class="loading">Loading pending prescriptions...</div>
+            </div>
+        </div>
+
+        <!-- Dispensing History -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>📚 Dispensing History</h2>
+                <div class="filter-controls">
+                    <select id="history-filter" class="filter-select">
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="all">All Time</option>
+                    </select>
+                    <button onclick="loadHistory()" class="btn btn-small">🔄 Refresh</button>
+                </div>
+            </div>
+            
+            <div id="dispensing-history" class="prescriptions-list">
+                <div class="loading">Loading history...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dispense Modal -->
+    <div id="dispense-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Dispense Prescription</h2>
+            <div id="dispense-details"></div>
+            <div class="modal-actions">
+                <button onclick="confirmDispense()" class="btn btn-primary">✅ Confirm Dispense</button>
+                <button onclick="closeDispenseModal()" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let currentPrescriptionId = null;
+
+        // Load pharmacist statistics
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/pharmacist/stats`);
+                if (!response.ok) throw new Error('Failed to load statistics');
+                
+                const data = await response.json();
+                document.getElementById('pending-count').textContent = data.pending || 0;
+                document.getElementById('dispensed-today').textContent = data.dispensed_today || 0;
+                document.getElementById('dispensed-total').textContent = data.dispensed_total || 0;
+                document.getElementById('active-tokens').textContent = data.active_tokens || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Verify access token
+        document.getElementById('token-verify-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const token = document.getElementById('access-token').value;
+            const resultDiv = document.getElementById('token-result');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/access/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.valid) {
+                    resultDiv.className = 'token-result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Token Valid</h3>
+                        <p><strong>Patient:</strong> ${data.patient_name}</p>
+                        <p><strong>Prescription ID:</strong> ${data.prescription_id}</p>
+                        <p><strong>Medication:</strong> ${data.medication_name}</p>
+                        <p><strong>Expires:</strong> ${new Date(data.expires_at).toLocaleString()}</p>
+                    `;
+                    resultDiv.style.display = 'block';
+                } else {
+                    resultDiv.className = 'token-result error';
+                    resultDiv.innerHTML = `<h3>❌ Invalid or Expired Token</h3><p>${data.message || 'Token verification failed'}</p>`;
+                    resultDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error verifying token:', error);
+                resultDiv.className = 'token-result error';
+                resultDiv.innerHTML = '<h3>❌ Verification Failed</h3><p>Unable to verify token</p>';
+                resultDiv.style.display = 'block';
+            }
+        });
+
+        // Load pending prescriptions
+        async function loadPendingPrescriptions() {
+            const listDiv = document.getElementById('pending-prescriptions');
+            listDiv.innerHTML = '<div class="loading">Loading pending prescriptions...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/pharmacist/pending`);
+                if (!response.ok) throw new Error('Failed to load prescriptions');
+                
+                const prescriptions = await response.json();
+                
+                if (prescriptions.length === 0) {
+                    listDiv.innerHTML = '<div class="empty-state">No pending prescriptions</div>';
+                    return;
+                }
+
+                listDiv.innerHTML = prescriptions.map(p => `
+                    <div class="prescription-card">
+                        <div class="prescription-header">
+                            <div>
+                                <h3>${p.medication_name}</h3>
+                                <p class="prescription-meta">Patient: ${p.patient_name} | Doctor: Dr. ${p.doctor_name}</p>
+                            </div>
+                            <span class="badge badge-pending">PENDING</span>
+                        </div>
+                        <div class="prescription-details">
+                            <div class="detail-item"><strong>Dosage:</strong> ${p.dosage}</div>
+                            <div class="detail-item"><strong>Quantity:</strong> ${p.quantity}</div>
+                            <div class="detail-item"><strong>Created:</strong> ${new Date(p.created_at).toLocaleDateString()}</div>
+                            <div class="detail-item"><strong>Prescription ID:</strong> ${p.id}</div>
+                        </div>
+                        ${p.instructions ? `<div class="prescription-instructions">${p.instructions}</div>` : ''}
+                        <div class="prescription-actions">
+                            <button onclick="openDispenseModal(${p.id})" class="btn btn-primary">💊 Dispense</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading prescriptions:', error);
+                listDiv.innerHTML = '<div class="error">Failed to load prescriptions</div>';
+            }
+        }
+
+        // Load dispensing history
+        async function loadHistory() {
+            const filter = document.getElementById('history-filter').value;
+            const listDiv = document.getElementById('dispensing-history');
+            listDiv.innerHTML = '<div class="loading">Loading history...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/pharmacist/history?filter=${filter}`);
+                if (!response.ok) throw new Error('Failed to load history');
+                
+                const prescriptions = await response.json();
+                
+                if (prescriptions.length === 0) {
+                    listDiv.innerHTML = '<div class="empty-state">No dispensing history</div>';
+                    return;
+                }
+
+                listDiv.innerHTML = prescriptions.map(p => `
+                    <div class="prescription-card">
+                        <div class="prescription-header">
+                            <div>
+                                <h3>${p.medication_name}</h3>
+                                <p class="prescription-meta">Patient: ${p.patient_name} | Doctor: Dr. ${p.doctor_name}</p>
+                            </div>
+                            <span class="badge badge-${p.state.toLowerCase()}">${p.state}</span>
+                        </div>
+                        <div class="prescription-details">
+                            <div class="detail-item"><strong>Dosage:</strong> ${p.dosage}</div>
+                            <div class="detail-item"><strong>Quantity:</strong> ${p.quantity}</div>
+                            <div class="detail-item"><strong>Dispensed:</strong> ${new Date(p.dispensed_at).toLocaleString()}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading history:', error);
+                listDiv.innerHTML = '<div class="error">Failed to load history</div>';
+            }
+        }
+
+        // Open dispense modal
+        async function openDispenseModal(prescriptionId) {
+            currentPrescriptionId = prescriptionId;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/prescriptions/${prescriptionId}`);
+                const prescription = await response.json();
+                
+                document.getElementById('dispense-details').innerHTML = `
+                    <div class="prescription-summary">
+                        <p><strong>Medication:</strong> ${prescription.medication_name}</p>
+                        <p><strong>Patient:</strong> ${prescription.patient_name}</p>
+                        <p><strong>Dosage:</strong> ${prescription.dosage}</p>
+                        <p><strong>Quantity:</strong> ${prescription.quantity}</p>
+                        <p><strong>Doctor:</strong> Dr. ${prescription.doctor_name}</p>
+                    </div>
+                `;
+                
+                document.getElementById('dispense-modal').style.display = 'flex';
+            } catch (error) {
+                console.error('Error loading prescription:', error);
+                alert('Failed to load prescription details');
+            }
+        }
+
+        // Confirm dispense
+        async function confirmDispense() {
+            if (!currentPrescriptionId) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/pharmacist/dispense/${currentPrescriptionId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ Prescription dispensed successfully! It is now locked.');
+                    closeDispenseModal();
+                    await loadStats();
+                    await loadPendingPrescriptions();
+                    await loadHistory();
+                } else {
+                    alert(`❌ Error: ${result.error || 'Failed to dispense'}`);
+                }
+            } catch (error) {
+                console.error('Error dispensing:', error);
+                alert('❌ Failed to dispense prescription');
+            }
+        }
+
+        // Close dispense modal
+        function closeDispenseModal() {
+            document.getElementById('dispense-modal').style.display = 'none';
+            currentPrescriptionId = null;
+        }
+
+        // History filter change
+        document.getElementById('history-filter').addEventListener('change', loadHistory);
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadPendingPrescriptions();
+            loadHistory();
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            loadStats();
+            loadPendingPrescriptions();
+        }, 30000);
+    </script>
+</body>
+</html>

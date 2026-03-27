@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="doctor-dashboard">
+    <nav class="navbar">
+        <div class="navbar-inner" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="nav-brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+                MediSure Vault - Doctor Portal
+            </div>
+            <div class="nav-links">
+                <a href="{{ url_for('dashboard') }}" class="active">Dashboard</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <div>
+                <h1>Welcome, Dr. {{ current_user.full_name }}</h1>
+                <p class="subtitle">Specialization: {{ doctor_profile.specialization }} | Hospital: {{ doctor_profile.hospital }}</p>
+                <p class="subtitle">License: {{ doctor_profile.license_number }}</p>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="total-prescriptions">0</div>
+                    <div class="stat-label">Total Prescriptions</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="pending-prescriptions">0</div>
+                    <div class="stat-label">Pending Dispensing</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="dispensed-prescriptions">0</div>
+                    <div class="stat-label">Dispensed</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔒</div>
+                <div class="stat-info">
+                    <div class="stat-value" id="locked-prescriptions">0</div>
+                    <div class="stat-label">Locked</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create New Prescription Section -->
+        <div class="section-card">
+            <h2>📋 Create New Prescription</h2>
+            <form id="prescription-form" class="prescription-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="patient-username">Patient Username *</label>
+                        <input type="text" id="patient-username" name="patient_username" required 
+                               placeholder="Enter patient username">
+                        <small>Patient must be registered in the system</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="medication-name">Medication Name *</label>
+                        <input type="text" id="medication-name" name="medication_name" required 
+                               placeholder="e.g., Amoxicillin">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dosage">Dosage *</label>
+                        <input type="text" id="dosage" name="dosage" required 
+                               placeholder="e.g., 500mg">
+                    </div>
+                    <div class="form-group">
+                        <label for="frequency">Frequency *</label>
+                        <input type="text" id="frequency" name="frequency" required 
+                               placeholder="e.g., 3 times daily">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="quantity">Quantity *</label>
+                        <input type="number" id="quantity" name="quantity" required min="1" 
+                               placeholder="e.g., 30">
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Duration (days) *</label>
+                        <input type="number" id="duration" name="duration" required min="1" 
+                               placeholder="e.g., 7">
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="instructions">Instructions</label>
+                    <textarea id="instructions" name="instructions" rows="3" 
+                              placeholder="Additional instructions for the patient..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Create Prescription</button>
+                    <button type="reset" class="btn btn-secondary">Clear Form</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- My Prescriptions List -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>📚 My Prescriptions</h2>
+                <div class="filter-controls">
+                    <select id="state-filter" class="filter-select">
+                        <option value="">All States</option>
+                        <option value="DRAFT">Draft</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="DISPENSED">Dispensed</option>
+                        <option value="LOCKED">Locked</option>
+                    </select>
+                    <button onclick="refreshPrescriptions()" class="btn btn-small">🔄 Refresh</button>
+                </div>
+            </div>
+            
+            <div id="prescriptions-list" class="prescriptions-list">
+                <div class="loading">Loading prescriptions...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+
+        // Load doctor statistics
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/doctor/stats`);
+                if (!response.ok) throw new Error('Failed to load statistics');
+                
+                const data = await response.json();
+                document.getElementById('total-prescriptions').textContent = data.total || 0;
+                document.getElementById('pending-prescriptions').textContent = data.pending || 0;
+                document.getElementById('dispensed-prescriptions').textContent = data.dispensed || 0;
+                document.getElementById('locked-prescriptions').textContent = data.locked || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load prescriptions created by this doctor
+        async function loadPrescriptions(state = '') {
+            const listDiv = document.getElementById('prescriptions-list');
+            listDiv.innerHTML = '<div class="loading">Loading prescriptions...</div>';
+
+            try {
+                let url = `${API_BASE}/api/doctor/prescriptions`;
+                if (state) url += `?state=${state}`;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to load prescriptions');
+                
+                const prescriptions = await response.json();
+                
+                if (prescriptions.length === 0) {
+                    listDiv.innerHTML = '<div class="empty-state">No prescriptions found</div>';
+                    return;
+                }
+
+                listDiv.innerHTML = prescriptions.map(p => `
+                    <div class="prescription-card">
+                        <div class="prescription-header">
+                            <div>
+                                <h3>${p.medication_name}</h3>
+                                <p class="prescription-meta">Patient: ${p.patient_name} | Created: ${new Date(p.created_at).toLocaleDateString()}</p>
+                            </div>
+                            <span class="badge badge-${p.state.toLowerCase()}">${p.state}</span>
+                        </div>
+                        <div class="prescription-details">
+                            <div class="detail-item">
+                                <strong>Dosage:</strong> ${p.dosage}
+                            </div>
+                            <div class="detail-item">
+                                <strong>Frequency:</strong> ${p.frequency || 'N/A'}
+                            </div>
+                            <div class="detail-item">
+                                <strong>Quantity:</strong> ${p.quantity}
+                            </div>
+                            <div class="detail-item">
+                                <strong>Duration:</strong> ${p.duration || 'N/A'} days
+                            </div>
+                        </div>
+                        ${p.instructions ? `<div class="prescription-instructions">${p.instructions}</div>` : ''}
+                        <div class="prescription-footer">
+                            <small>ID: ${p.id} | Tamper Score: ${p.tamper_score}/100</small>
+                            ${p.dispensed_at ? `<small>Dispensed: ${new Date(p.dispensed_at).toLocaleString()}</small>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading prescriptions:', error);
+                listDiv.innerHTML = '<div class="error">Failed to load prescriptions</div>';
+            }
+        }
+
+        // Create new prescription
+        document.getElementById('prescription-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/doctor/prescriptions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ Prescription created successfully!');
+                    e.target.reset();
+                    await loadStats();
+                    await loadPrescriptions();
+                } else {
+                    alert(`❌ Error: ${result.error || 'Failed to create prescription'}`);
+                }
+            } catch (error) {
+                console.error('Error creating prescription:', error);
+                alert('❌ Failed to create prescription');
+            }
+        });
+
+        // Refresh prescriptions
+        function refreshPrescriptions() {
+            const state = document.getElementById('state-filter').value;
+            loadPrescriptions(state);
+        }
+
+        // State filter change
+        document.getElementById('state-filter').addEventListener('change', refreshPrescriptions);
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadPrescriptions();
+        });
+    </script>
+</body>
+</html>

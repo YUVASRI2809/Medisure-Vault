@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anomaly Detection - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚨 Anomaly Detection Dashboard</h1>
+            <p class="subtitle">Real-Time Risk Monitoring & Detection</p>
+        </header>
+
+        <nav class="navigation-bar">
+            <a href="/dashboard" class="nav-btn">📊 Dashboard</a>
+            <a href="/prescriptions-manager" class="nav-btn">📋 Prescriptions</a>
+            <a href="/token-manager" class="nav-btn">🔑 Tokens</a>
+            <a href="/collision-monitor" class="nav-btn">⚠️ Collisions</a>
+            <a href="/anomaly-dashboard" class="nav-btn active">🚨 Anomalies</a>
+        </nav>
+
+        <div id="messageBox" class="message-box hidden"></div>
+
+        <!-- Statistics Overview -->
+        <section class="card">
+            <h2>📈 Anomaly Statistics (Last 30 Days)</h2>
+            <button id="refreshStatsBtn" class="btn btn-info">🔄 Refresh Statistics</button>
+            <div id="statsResult" class="stats-grid"></div>
+        </section>
+
+        <!-- High-Risk Prescriptions -->
+        <section class="card">
+            <h2>⚠️ High-Risk Prescriptions (Tamper Score ≥ 50)</h2>
+            <button id="loadHighRiskBtn" class="btn btn-warning">Load High-Risk Prescriptions</button>
+            <div id="highRiskResult" class="prescriptions-grid"></div>
+        </section>
+
+        <!-- Run Anomaly Check -->
+        <section class="card">
+            <h2>🔍 Run Anomaly Check on Prescription</h2>
+            <form id="checkAnomalyForm">
+                <div class="form-group">
+                    <label for="checkPrescriptionId">Prescription ID</label>
+                    <input type="number" id="checkPrescriptionId" name="prescription_id" required placeholder="Enter prescription ID">
+                </div>
+                <button type="submit" class="btn btn-primary">Run All Checks</button>
+            </form>
+            <div id="anomalyCheckResult" class="result-box hidden"></div>
+        </section>
+
+        <!-- Controlled Substances Monitor -->
+        <section class="card">
+            <h2>💊 Controlled Substances Monitoring</h2>
+            <p>Monitor prescriptions with controlled substances</p>
+            <button id="loadControlledBtn" class="btn btn-info">View Controlled Substances</button>
+            <div id="controlledResult" class="result-box hidden"></div>
+        </section>
+
+        <!-- Recent Anomalies Log -->
+        <section class="card">
+            <h2>📜 Recent Anomaly Detections</h2>
+            <div class="form-group">
+                <label for="anomalyDays">Days to look back</label>
+                <input type="number" id="anomalyDays" value="7" min="1" max="90">
+                <button id="loadAnomaliesBtn" class="btn btn-primary">Load Anomalies</button>
+            </div>
+            <div id="anomaliesLogResult" class="audit-log-container"></div>
+        </section>
+
+        <footer>
+            <p>© 2026 MediSure Vault - Secure Healthcare Infrastructure</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='anomaly.js') }}"></script>
+</body>
+</html>

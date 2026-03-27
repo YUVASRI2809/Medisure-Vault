@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacist Registration - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo" style="background: #ccfbf1;">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="12" y1="8" x2="12" y2="16"/>
+                        <line x1="8" y1="12" x2="16" y2="12"/>
+                    </svg>
+                </div>
+                <h1 class="auth-title">Pharmacist Registration</h1>
+                <p class="auth-subtitle">Join MediSure Vault as a Pharmacy Professional</p>
+            </div>
+            
+            <form id="register-form">
+                <h3 style="margin-bottom: 1rem; font-size: 1.125rem; color: #374151;">Account Information</h3>
+                
+                <div class="form-group">
+                    <label for="username" class="form-label">Username *</label>
+                    <input type="text" id="username" name="username" class="form-input" required 
+                           placeholder="Choose a unique username">
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Email *</label>
+                    <input type="email" id="email" name="email" class="form-input" required 
+                           placeholder="your.email@pharmacy.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Password *</label>
+                    <input type="password" id="password" name="password" class="form-input" required 
+                           placeholder="Minimum 8 characters">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password" class="form-label">Confirm Password *</label>
+                    <input type="password" id="confirm-password" name="confirm_password" class="form-input" required 
+                           placeholder="Re-enter your password">
+                </div>
+
+                <h3 style="margin-bottom: 1rem; margin-top: 1.5rem; font-size: 1.125rem; color: #374151;">Personal Information</h3>
+
+                <div class="form-group">
+                    <label for="full-name" class="form-label">Full Name *</label>
+                    <input type="text" id="full-name" name="full_name" class="form-input" required 
+                           placeholder="Your full name">
+                </div>
+
+                <h3 style="margin-bottom: 1rem; margin-top: 1.5rem; font-size: 1.125rem; color: #374151;">Professional Credentials</h3>
+
+                <div class="form-group">
+                    <label for="pharmacy-name" class="form-label">Pharmacy Name *</label>
+                    <input type="text" id="pharmacy-name" name="pharmacy_name" class="form-input" required 
+                           placeholder="e.g., City Central Pharmacy">
+                </div>
+
+                <div class="form-group">
+                    <label for="license-number" class="form-label">Pharmacist License Number *</label>
+                    <input type="text" id="license-number" name="license_number" class="form-input" required 
+                           placeholder="e.g., PH123456">
+                </div>
+
+                <div class="form-group">
+                    <label for="location" class="form-label">Pharmacy Location *</label>
+                    <input type="text" id="location" name="location" class="form-input" required 
+                           placeholder="Full address of pharmacy">
+                </div>
+
+                <div class="form-group">
+                    <label for="certification-date" class="form-label">Certification Date</label>
+                    <input type="date" id="certification-date" name="certification_date" class="form-input">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg">Register as Pharmacist</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="{{ url_for('auth.authority_login') }}">Login here</a></p>
+                <p><a href="{{ url_for('landing') }}">← Back to Home</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            if (password !== confirmPassword) {
+                alert('❌ Passwords do not match!');
+                return;
+            }
+
+            if (password.length < 8) {
+                alert('❌ Password must be at least 8 characters long!');
+                return;
+            }
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.role = 'PHARMACIST';
+            delete data.confirm_password;
+            
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ Registration successful! Please login.');
+                    window.location.href = '/authority-login';
+                } else {
+                    alert(`❌ Registration failed: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert('❌ Registration failed. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>

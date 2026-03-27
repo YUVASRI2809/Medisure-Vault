@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescription Manager - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 Prescription Management</h1>
+            <p class="subtitle">Complete Prescription Lifecycle Management</p>
+        </header>
+
+        <nav class="navigation-bar">
+            <a href="/dashboard" class="nav-btn">📊 Dashboard</a>
+            <a href="/prescriptions-manager" class="nav-btn active">📋 Prescriptions</a>
+            <a href="/token-manager" class="nav-btn">🔑 Tokens</a>
+            <a href="/collision-monitor" class="nav-btn">⚠️ Collisions</a>
+            <a href="/anomaly-dashboard" class="nav-btn">🚨 Anomalies</a>
+        </nav>
+
+        <div id="messageBox" class="message-box hidden"></div>
+
+        <!-- My Prescriptions (role-based) -->
+        <section class="card">
+            <h2>📋 My Prescriptions</h2>
+            <div class="filter-bar">
+                <select id="stateFilter">
+                    <option value="">All States</option>
+                    <option value="CREATED">Created</option>
+                    <option value="SHARED">Shared</option>
+                    <option value="DISPENSED">Dispensed</option>
+                    <option value="LOCKED">Locked</option>
+                    <option value="CANCELLED">Cancelled</option>
+                </select>
+                <button id="loadPrescriptionsBtn" class="btn btn-primary">🔄 Load Prescriptions</button>
+            </div>
+            <div id="prescriptionsListResult" class="prescriptions-table-container"></div>
+        </section>
+
+        <!-- View Prescription Details -->
+        <section class="card">
+            <h2>🔍 View Prescription Details</h2>
+            <form id="viewPrescriptionForm">
+                <div class="form-group">
+                    <label for="viewPrescriptionId">Prescription ID</label>
+                    <input type="number" id="viewPrescriptionId" name="prescription_id" required placeholder="Enter prescription ID">
+                </div>
+                <button type="submit" class="btn btn-info">View Details</button>
+            </form>
+            <div id="prescriptionDetailsResult" class="result-box hidden"></div>
+        </section>
+
+        <!-- Create Prescription (Doctors only) -->
+        <section id="createPrescriptionSection" class="card hidden">
+            <h2>✏️ Create New Prescription</h2>
+            <form id="createPrescriptionForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="patientId">Patient ID</label>
+                        <input type="number" id="patientId" name="patient_id" required placeholder="Enter patient ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="medication">Medication Name</label>
+                        <input type="text" id="medication" name="medication" required placeholder="e.g., Amoxicillin">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dosage">Dosage</label>
+                        <input type="text" id="dosage" name="dosage" required placeholder="e.g., 500mg">
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity">Quantity</label>
+                        <input type="number" id="quantity" name="quantity" required placeholder="e.g., 30">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="refills">Refills Allowed</label>
+                        <input type="number" id="refills" name="refills" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="expiresInDays">Expires In (days)</label>
+                        <input type="number" id="expiresInDays" name="expires_in_days" value="365" min="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="instructions">Instructions</label>
+                    <textarea id="instructions" name="instructions" rows="2" placeholder="Usage instructions"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="diagnosis">Diagnosis</label>
+                    <textarea id="diagnosis" name="diagnosis" rows="2" placeholder="Diagnosis or reason for prescription"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Create Prescription</button>
+            </form>
+            <div id="createPrescriptionResult" class="result-box hidden"></div>
+        </section>
+
+        <!-- Lock Prescription (Pharmacists/Admin) -->
+        <section id="lockPrescriptionSection" class="card hidden">
+            <h2>🔒 Lock Prescription (Post-Dispense)</h2>
+            <p>Permanently lock a dispensed prescription to prevent modifications</p>
+            <form id="lockPrescriptionForm">
+                <div class="form-group">
+                    <label for="lockPrescriptionId">Prescription ID</label>
+                    <input type="number" id="lockPrescriptionId" name="prescription_id" required>
+                </div>
+                <div class="form-group">
+                    <label for="lockReason">Reason (optional)</label>
+                    <input type="text" id="lockReason" name="reason" placeholder="Reason for locking">
+                </div>
+                <button type="submit" class="btn btn-danger">🔒 Lock Prescription</button>
+            </form>
+            <div id="lockPrescriptionResult" class="result-box hidden"></div>
+        </section>
+
+        <!-- Prescription History (Blockchain) -->
+        <section class="card">
+            <h2>🔗 Prescription Blockchain History</h2>
+            <form id="historyForm">
+                <div class="form-group">
+                    <label for="historyPrescriptionId">Prescription ID</label>
+                    <input type="number" id="historyPrescriptionId" name="prescription_id" required>
+                </div>
+                <button type="submit" class="btn btn-info">View Blockchain History</button>
+            </form>
+            <div id="historyResult" class="blockchain-history-container"></div>
+        </section>
+
+        <!-- Tamper Score & Integrity Check -->
+        <section class="card">
+            <h2>🎯 Tamper Score & Integrity Check</h2>
+            <form id="tamperCheckForm">
+                <div class="form-group">
+                    <label for="tamperPrescriptionId">Prescription ID</label>
+                    <input type="number" id="tamperPrescriptionId" name="prescription_id" required>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Check Tamper Score</button>
+                    <button type="button" id="verifyIntegrityBtn" class="btn btn-info">Verify Integrity</button>
+                </div>
+            </form>
+            <div id="tamperScoreResult" class="result-box hidden"></div>
+        </section>
+
+        <footer>
+            <p>© 2026 MediSure Vault - Secure Healthcare Infrastructure</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='prescriptions.js') }}"></script>
+</body>
+</html>

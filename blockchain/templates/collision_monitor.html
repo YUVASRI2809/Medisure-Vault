@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collision Monitor - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚠️ Multi-Pharmacy Collision Detection</h1>
+            <p class="subtitle">Prevent Duplicate Dispensing Across Pharmacies</p>
+        </header>
+
+        <nav class="navigation-bar">
+            <a href="/dashboard" class="nav-btn">📊 Dashboard</a>
+            <a href="/prescriptions-manager" class="nav-btn">📋 Prescriptions</a>
+            <a href="/token-manager" class="nav-btn">🔑 Tokens</a>
+            <a href="/collision-monitor" class="nav-btn active">⚠️ Collisions</a>
+            <a href="/anomaly-dashboard" class="nav-btn">🚨 Anomalies</a>
+        </nav>
+
+        <div id="messageBox" class="message-box hidden"></div>
+
+        <!-- Real-Time Collision Status -->
+        <section class="card alert-card">
+            <h2>🔴 Active Collision Alerts</h2>
+            <div class="alert-status">
+                <span id="collisionCount" class="alert-badge">0</span>
+                <span>Active Collisions Detected</span>
+            </div>
+            <button id="refreshCollisionsBtn" class="btn btn-danger">🔄 Refresh Collision Status</button>
+            <div id="activeCollisionsResult" class="collisions-grid"></div>
+        </section>
+
+        <!-- Check Prescription for Collisions -->
+        <section class="card">
+            <h2>🔍 Check Prescription for Collisions</h2>
+            <form id="checkCollisionForm">
+                <div class="form-group">
+                    <label for="collisionPrescriptionId">Prescription ID</label>
+                    <input type="number" id="collisionPrescriptionId" name="prescription_id" required placeholder="Enter prescription ID">
+                </div>
+                <button type="submit" class="btn btn-primary">Check for Collisions</button>
+            </form>
+            <div id="collisionCheckResult" class="result-box hidden"></div>
+        </section>
+
+        <!-- Pharmacy Access History -->
+        <section class="card">
+            <h2>🏥 Pharmacy Access History</h2>
+            <p>View which pharmacies have accessed a prescription</p>
+            <form id="accessHistoryForm">
+                <div class="form-group">
+                    <label for="historyPrescriptionId">Prescription ID</label>
+                    <input type="number" id="historyPrescriptionId" name="prescription_id" required placeholder="Enter prescription ID">
+                </div>
+                <button type="submit" class="btn btn-info">View Access History</button>
+            </form>
+            <div id="accessHistoryResult" class="result-box hidden"></div>
+        </section>
+
+        <!-- Collision Statistics -->
+        <section class="card">
+            <h2>📊 Collision Statistics</h2>
+            <div class="form-group">
+                <label for="statsDays">Time Period (days)</label>
+                <select id="statsDays">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+                <button id="loadStatsBtn" class="btn btn-info">Load Statistics</button>
+            </div>
+            <div id="collisionStatsResult" class="stats-grid"></div>
+        </section>
+
+        <!-- Auto-Lock Configuration Status -->
+        <section class="card config-card">
+            <h2>⚙️ Collision Detection Configuration</h2>
+            <div id="configStatus" class="config-display">
+                <p><strong>Auto-Lock on Collision:</strong> <span id="autoLockStatus">Loading...</span></p>
+                <p><strong>Detection Enabled:</strong> <span id="detectionStatus">Loading...</span></p>
+                <p class="info-text">Note: Configuration changes require backend access</p>
+            </div>
+            <button id="loadConfigBtn" class="btn btn-secondary">Refresh Configuration</button>
+        </section>
+
+        <!-- Recent Collision Events -->
+        <section class="card">
+            <h2>📜 Recent Collision Events</h2>
+            <button id="loadEventsBtn" class="btn btn-primary">Load Recent Events</button>
+            <div id="eventsResult" class="audit-log-container"></div>
+        </section>
+
+        <footer>
+            <p>© 2026 MediSure Vault - Secure Healthcare Infrastructure</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='collision.js') }}"></script>
+</body>
+</html>

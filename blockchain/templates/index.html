@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediSure Vault - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏥 MediSure Vault</h1>
+            <p class="subtitle">Blockchain Prescription Management System</p>
+            <div id="systemStatus" class="status-indicator">
+                <span class="status-dot"></span>
+                <span id="statusText">Checking system...</span>
+            </div>
+        </header>
+
+        <div id="messageBox" class="message-box hidden"></div>
+
+        <!-- Login Section -->
+        <section id="loginSection" class="card">
+            <h2>🔐 Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" name="username" required placeholder="Enter your username">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="password" required placeholder="Enter your password">
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+        </section>
+
+        <!-- Dashboard Section (hidden until logged in) -->
+        <section id="dashboardSection" class="hidden">
+            <div class="welcome-card card">
+                <h2>Welcome, <span id="userName"></span>!</h2>
+                <p>Role: <span id="userRole" class="badge"></span></p>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+
+            <!-- Health Check -->
+            <div class="card">
+                <h3>System Health Check</h3>
+                <button id="healthCheckBtn" class="btn btn-info">Check System Status</button>
+                <div id="healthResult" class="result-box hidden"></div>
+            </div>
+
+            <!-- Create Prescription (Doctors only) -->
+            <div id="prescriptionCreateSection" class="card hidden">
+                <h3>📝 Create Prescription</h3>
+                <form id="createPrescriptionForm">
+                    <div class="form-group">
+                        <label for="patientId">Patient ID</label>
+                        <input type="number" id="patientId" name="patient_id" required placeholder="Enter patient ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="medication">Medication</label>
+                        <input type="text" id="medication" name="medication" required placeholder="e.g., Amoxicillin 500mg">
+                    </div>
+                    <div class="form-group">
+                        <label for="dosage">Dosage</label>
+                        <input type="text" id="dosage" name="dosage" required placeholder="e.g., 1 tablet twice daily">
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Duration (days)</label>
+                        <input type="number" id="duration" name="duration" required placeholder="e.g., 7">
+                    </div>
+                    <button type="submit" class="btn btn-success">Create Prescription</button>
+                </form>
+                <div id="createPrescriptionResult" class="result-box hidden"></div>
+            </div>
+
+            <!-- Dispense Prescription (Pharmacists only) -->
+            <div id="dispensePrescriptionSection" class="card hidden">
+                <h3>💊 Dispense Prescription</h3>
+                <form id="dispensePrescriptionForm">
+                    <div class="form-group">
+                        <label for="prescriptionId">Prescription ID</label>
+                        <input type="number" id="prescriptionId" name="prescription_id" required placeholder="Enter prescription ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="accessToken">Access Token</label>
+                        <input type="text" id="accessToken" name="access_token" required placeholder="Enter patient's access token">
+                    </div>
+                    <button type="submit" class="btn btn-success">Dispense</button>
+                </form>
+                <div id="dispensePrescriptionResult" class="result-box hidden"></div>
+            </div>
+
+            <!-- Share Prescription (Patients only) -->
+            <div id="sharePrescriptionSection" class="card hidden">
+                <h3>🔗 Generate Access Token (Time-Bound)</h3>
+                <p>Create a one-time, expirable token to share your prescription with a pharmacy</p>
+                <form id="sharePrescriptionForm">
+                    <div class="form-group">
+                        <label for="sharePrescriptionId">Prescription ID</label>
+                        <input type="number" id="sharePrescriptionId" name="prescription_id" required placeholder="Enter prescription ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="validityMinutes">Validity (minutes)</label>
+                        <input type="number" id="validityMinutes" name="validity_minutes" value="60" required placeholder="Token validity in minutes">
+                    </div>
+                    <button type="submit" class="btn btn-success">Generate Access Token</button>
+                </form>
+                <div id="sharePrescriptionResult" class="result-box hidden"></div>
+            </div>
+
+            <!-- Tamper Score Check (All roles) -->
+            <div class="card">
+                <h3>🎯 Check Tamper Score</h3>
+                <p>View tamper evidence score (0-100) for a prescription</p>
+                <form id="tamperScoreForm">
+                    <div class="form-group">
+                        <label for="tamperPrescriptionId">Prescription ID</label>
+                        <input type="number" id="tamperPrescriptionId" name="prescription_id" required placeholder="Enter prescription ID">
+                    </div>
+                    <button type="submit" class="btn btn-info">Check Tamper Score</button>
+                </form>
+                <div id="tamperScoreResult" class="result-box hidden"></div>
+            </div>
+
+            <!-- Verify Prescription Integrity (All roles) -->
+            <div class="card">
+                <h3>🔍 Verify Prescription Integrity</h3>
+                <p>Verify prescription against blockchain and detect tampering</p>
+                <form id="verifyIntegrityForm">
+                    <div class="form-group">
+                        <label for="verifyPrescriptionId">Prescription ID</label>
+                        <input type="number" id="verifyPrescriptionId" name="prescription_id" required placeholder="Enter prescription ID">
+                    </div>
+                    <button type="submit" class="btn btn-info">Verify Integrity</button>
+                </form>
+                <div id="verifyIntegrityResult" class="result-box hidden"></div>
+            </div>
+
+            <!-- Lock Prescription (Pharmacists/Admin) -->
+            <div id="lockPrescriptionSection" class="card hidden">
+                <h3>🔒 Lock Prescription (Post-Dispense)</h3>
+                <p>Permanently lock a dispensed prescription to prevent modifications</p>
+                <form id="lockPrescriptionForm">
+                    <div class="form-group">
+                        <label for="lockPrescriptionId">Prescription ID</label>
+                        <input type="number" id="lockPrescriptionId" name="prescription_id" required placeholder="Enter prescription ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="lockReason">Reason (optional)</label>
+                        <input type="text" id="lockReason" name="reason" placeholder="Reason for locking">
+                    </div>
+                    <button type="submit" class="btn btn-success">Lock Prescription</button>
+                </form>
+                <div id="lockPrescriptionResult" class="result-box hidden"></div>
+            </div>
+
+            <!-- Emergency Access (Admin only) -->
+            <div id="emergencyAccessSection" class="card hidden">
+                <h3>🆘 Emergency Override Access</h3>
+                <p>Emergency access to prescriptions with mandatory audit logging</p>
+                <form id="emergencyAccessForm">
+                    <div class="form-group">
+                        <label for="emergencyPrescriptionId">Prescription ID</label>
+                        <input type="number" id="emergencyPrescriptionId" name="prescription_id" required placeholder="Enter prescription ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="emergencyJustification">Justification (min 50 characters)</label>
+                        <textarea id="emergencyJustification" name="justification" rows="3" required placeholder="Detailed justification for emergency access"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Grant Emergency Access</button>
+                </form>
+                <div id="emergencyAccessResult" class="result-box hidden"></div>
+            </div>
+        </section>
+
+        <footer>
+            <p>© 2026 MediSure Vault - Secure Healthcare Infrastructure</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

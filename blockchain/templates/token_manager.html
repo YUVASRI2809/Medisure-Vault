@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Manager - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔑 Time-Bound Access Token Manager</h1>
+            <p class="subtitle">Patient-Controlled Prescription Sharing</p>
+        </header>
+
+        <nav class="navigation-bar">
+            <a href="/dashboard" class="nav-btn">📊 Dashboard</a>
+            <a href="/prescriptions-manager" class="nav-btn">📋 Prescriptions</a>
+            <a href="/token-manager" class="nav-btn active">🔑 Tokens</a>
+            <a href="/collision-monitor" class="nav-btn">⚠️ Collisions</a>
+            <a href="/anomaly-dashboard" class="nav-btn">🚨 Anomalies</a>
+        </nav>
+
+        <div id="messageBox" class="message-box hidden"></div>
+
+        <!-- Active Tokens Overview -->
+        <section class="card">
+            <h2>✅ Active Access Tokens</h2>
+            <p>Valid, unexpired, and unused tokens</p>
+            <button id="loadActiveTokensBtn" class="btn btn-success">🔄 Load Active Tokens</button>
+            <div id="activeTokensResult" class="tokens-grid"></div>
+        </section>
+
+        <!-- Generate New Token (Patients only) -->
+        <section id="generateTokenSection" class="card">
+            <h2>➕ Generate New Access Token</h2>
+            <p>Create a one-time, time-bound token to share your prescription with a pharmacy</p>
+            <form id="generateTokenForm">
+                <div class="form-group">
+                    <label for="tokenPrescriptionId">Prescription ID</label>
+                    <input type="number" id="tokenPrescriptionId" name="prescription_id" required placeholder="Enter your prescription ID">
+                </div>
+                <div class="form-group">
+                    <label for="validityMinutes">Validity Duration (minutes)</label>
+                    <select id="validityMinutes">
+                        <option value="15">15 minutes</option>
+                        <option value="30">30 minutes</option>
+                        <option value="60" selected>1 hour</option>
+                        <option value="120">2 hours</option>
+                        <option value="240">4 hours</option>
+                        <option value="480">8 hours</option>
+                        <option value="1440">24 hours</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success">Generate Token</button>
+            </form>
+            <div id="generateTokenResult" class="result-box hidden"></div>
+        </section>
+
+        <!-- Verify Token -->
+        <section class="card">
+            <h2>🔍 Verify Token Validity</h2>
+            <p>Check if a token is valid without consuming it</p>
+            <form id="verifyTokenForm">
+                <div class="form-group">
+                    <label for="verifyTokenString">Token String</label>
+                    <input type="text" id="verifyTokenString" name="token" required placeholder="Enter token string">
+                </div>
+                <button type="submit" class="btn btn-info">Verify Token</button>
+            </form>
+            <div id="verifyTokenResult" class="result-box hidden"></div>
+        </section>
+
+        <!-- Revoke Token -->
+        <section class="card">
+            <h2>🚫 Revoke Access Token</h2>
+            <p>Revoke an active token to prevent its use</p>
+            <form id="revokeTokenForm">
+                <div class="form-group">
+                    <label for="revokeTokenId">Token ID</label>
+                    <input type="number" id="revokeTokenId" name="token_id" required placeholder="Enter token ID">
+                </div>
+                <div class="form-group">
+                    <label for="revokeReason">Reason (optional)</label>
+                    <input type="text" id="revokeReason" name="reason" placeholder="Reason for revocation">
+                </div>
+                <button type="submit" class="btn btn-danger">Revoke Token</button>
+            </form>
+            <div id="revokeTokenResult" class="result-box hidden"></div>
+        </section>
+
+        <!-- Extend Token -->
+        <section class="card">
+            <h2>⏱️ Extend Token Validity</h2>
+            <p>Add additional time to an existing token</p>
+            <form id="extendTokenForm">
+                <div class="form-group">
+                    <label for="extendTokenId">Token ID</label>
+                    <input type="number" id="extendTokenId" name="token_id" required placeholder="Enter token ID">
+                </div>
+                <div class="form-group">
+                    <label for="additionalMinutes">Additional Minutes</label>
+                    <select id="additionalMinutes">
+                        <option value="15">15 minutes</option>
+                        <option value="30" selected>30 minutes</option>
+                        <option value="60">1 hour</option>
+                        <option value="120">2 hours</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-warning">Extend Token</button>
+            </form>
+            <div id="extendTokenResult" class="result-box hidden"></div>
+        </section>
+
+        <!-- All My Tokens (including expired) -->
+        <section class="card">
+            <h2>📋 All My Tokens</h2>
+            <div class="filter-bar">
+                <label>
+                    <input type="checkbox" id="includeExpired">
+                    Include Expired Tokens
+                </label>
+                <button id="loadAllTokensBtn" class="btn btn-primary">Load All Tokens</button>
+            </div>
+            <div id="allTokensResult" class="tokens-table-container"></div>
+        </section>
+
+        <!-- Token Statistics -->
+        <section class="card">
+            <h2>📊 Token Usage Statistics</h2>
+            <button id="loadTokenStatsBtn" class="btn btn-info">Load Statistics</button>
+            <div id="tokenStatsResult" class="stats-grid"></div>
+        </section>
+
+        <footer>
+            <p>© 2026 MediSure Vault - Secure Healthcare Infrastructure</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='tokens.js') }}"></script>
+</body>
+</html>

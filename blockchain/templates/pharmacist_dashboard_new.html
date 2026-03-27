@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacist Dashboard - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="pharmacist-dashboard">
+    <div class="dashboard-layout">
+        <!-- Top Navigation Bar -->
+        <nav class="top-navbar">
+            <div class="top-navbar-brand">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+                MediSure Vault
+            </div>
+            <div class="top-navbar-user">
+                <div class="user-info">
+                    <div class="user-name">{{ current_user.full_name }}</div>
+                    <div class="user-role">{{ pharmacist_profile.pharmacy_name }}</div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Left Sidebar Navigation -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Main</div>
+                    <a href="#overview" class="sidebar-link active" onclick="showSection('overview'); return false;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                        </svg>
+                        <span>Overview</span>
+                    </a>
+                    <a href="#verify" class="sidebar-link" onclick="showSection('verify'); return false;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                        <span>Verify Token</span>
+                    </a>
+                </div>
+                
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Dispensing Queue</div>
+                    <a href="#pending-queue" class="sidebar-link" onclick="showSection('pending-queue'); return false;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span>Pending Prescriptions</span>
+                        <span class="sidebar-badge" id="pending-badge">0</span>
+                    </a>
+                    <a href="#dispense-history" class="sidebar-link" onclick="showSection('dispense-history'); return false;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        <span>Dispensing History</span>
+                    </a>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Alerts & Monitoring</div>
+                    <a href="#collision-alerts" class="sidebar-link" onclick="showSection('collision-alerts'); return false;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m5.2-15.8l-4.2 4.2m-2 2l-4.2 4.2M23 12h-6m-6 0H1m15.8 5.2l-4.2-4.2m-2-2l-4.2-4.2"/>
+                        </svg>
+                        <span>Collision Alerts</span>
+                    </a>
+                    <a href="#anomaly-alerts" class="sidebar-link" onclick="showSection('anomaly-alerts'); return false;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        <span>Anomaly Detection</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Overview Section -->
+            <section id="overview-section" class="content-section">
+                <div class="content-header">
+                    <div>
+                        <h1 class="content-title">Pharmacist Dashboard</h1>
+                        <p class="content-subtitle">{{ pharmacist_profile.pharmacy_name }} · {{ pharmacist_profile.location }}</p>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="stats-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background: #fef3c7; color: #f59e0b;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </div>
+                            <div class="kpi-label">Pending Dispensing</div>
+                        </div>
+                        <div class="kpi-value" id="pending-count">0</div>
+                        <div class="kpi-trend">Awaiting action</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background: #d1fae5; color: #10b981;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </div>
+                            <div class="kpi-label">Dispensed Today</div>
+                        </div>
+                        <div class="kpi-value" id="dispensed-today">0</div>
+                        <div class="kpi-trend">Current session</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background: #e8f2fd; color: #1e6fd9;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                                    <rect x="9" y="3" width="6" height="4" rx="1"/>
+                                </svg>
+                            </div>
+                            <div class="kpi-label">Total Dispensed</div>
+                        </div>
+                        <div class="kpi-value" id="dispensed-total">0</div>
+                        <div class="kpi-trend">All time</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background: #ccfbf1; color: #0d9488;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                </svg>
+                            </div>
+                            <div class="kpi-label">Active Tokens</div>
+                        </div>
+                        <div class="kpi-value" id="active-tokens">0</div>
+                        <div class="kpi-trend">Currently valid</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="section-card" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem; font-size: 1.125rem;">Quick Token Verification</h3>
+                    <form id="quick-verify-form" style="display: flex; gap: 1rem; align-items: flex-end;">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label for="quick-token" class="form-label">Access Token</label>
+                            <input type="text" id="quick-token" class="form-input" placeholder="Enter patient access token" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Verify & View</button>
+                    </form>
+                    <div id="quick-verify-result" style="margin-top: 1rem; display: none;"></div>
+                </div>
+            </section>
+
+            <!-- Verify Token Section -->
+            <section id="verify-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1 class="content-title">Verify Access Token</h1>
+                    <p class="content-subtitle">Validate patient access tokens before dispensing</p>
+                </div>
+
+                <div class="section-card">
+                    <form id="token-verify-form">
+                        <div class="form-group">
+                            <label for="access-token" class="form-label">Patient Access Token *</label>
+                            <input type="text" id="access-token" name="token" class="form-input" required 
+                                   placeholder="Enter the access token provided by the patient">
+                            <small style="color: #6b7280; font-size: 0.875rem;">The token must be valid and not expired</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg">Verify Token</button>
+                    </form>
+                    <div id="token-result" style="margin-top: 2rem; display: none;"></div>
+                </div>
+            </section>
+
+            <!-- Pending Queue Section -->
+            <section id="pending-queue-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1 class="content-title">Pending Dispensing Queue</h1>
+                    <p class="content-subtitle">Prescriptions waiting to be dispensed</p>
+                </div>
+
+                <div class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Pending Prescriptions</h2>
+                        <div class="table-actions">
+                            <button onclick="loadPendingPrescriptions()" class="btn btn-sm btn-secondary">Refresh</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Patient</th>
+                                    <th>Medication</th>
+                                    <th>Dosage</th>
+                                    <th>Quantity</th>
+                                    <th>Doctor</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pending-prescriptions-table">
+                                <tr><td colspan="8" class="table-empty">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dispense History Section -->
+            <section id="dispense-history-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1 class="content-title">Dispensing History</h1>
+                    <p class="content-subtitle">View your dispensing records</p>
+                </div>
+
+                <div class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Dispensed Prescriptions</h2>
+                        <div class="table-actions">
+                            <select id="history-filter" class="form-input" style="width: 150px;" onchange="loadHistory()">
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="all">All Time</option>
+                            </select>
+                            <button onclick="loadHistory()" class="btn btn-sm btn-secondary">Refresh</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Patient</th>
+                                    <th>Medication</th>
+                                    <th>Quantity</th>
+                                    <th>Doctor</th>
+                                    <th>Dispensed At</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table">
+                                <tr><td colspan="7" class="table-empty">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Collision Alerts Section -->
+            <section id="collision-alerts-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1 class="content-title">Collision Alerts</h1>
+                    <p class="content-subtitle">Monitor concurrent dispensing attempts</p>
+                </div>
+
+                <div class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Recent Collision Events</h2>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Prescription ID</th>
+                                    <th>Event Type</th>
+                                    <th>Details</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody id="collision-table">
+                                <tr><td colspan="4" class="table-empty">No collision events detected</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Anomaly Alerts Section -->
+            <section id="anomaly-alerts-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1 class="content-title">Anomaly Detection</h1>
+                    <p class="content-subtitle">System-detected unusual patterns and behaviors</p>
+                </div>
+
+                <div class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Detected Anomalies</h2>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Severity</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Affected Entity</th>
+                                    <th>Detected At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="anomaly-table">
+                                <tr><td colspan="5" class="table-empty">No anomalies detected</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Dispense Modal -->
+    <div id="dispense-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Dispense Prescription</h2>
+            <div id="dispense-details"></div>
+            <div class="modal-actions">
+                <button onclick="confirmDispense()" class="btn btn-primary">Confirm Dispense</button>
+                <button onclick="closeDispenseModal()" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let currentPrescriptionId = null;
+
+        // Navigation
+        function showSection(sectionName) {
+            document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            
+            document.getElementById(`${sectionName}-section`).style.display = 'block';
+            document.querySelector(`[onclick="showSection('${sectionName}'); return false;"]`)?.classList.add('active');
+        }
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/pharmacist/stats`);
+                if (!response.ok) throw new Error('Failed to load statistics');
+                
+                const data = await response.json();
+                document.getElementById('pending-count').textContent = data.pending || 0;
+                document.getElementById('dispensed-today').textContent = data.dispensed_today || 0;
+                document.getElementById('dispensed-total').textContent = data.dispensed_total || 0;
+                document.getElementById('active-tokens').textContent = data.active_tokens || 0;
+                document.getElementById('pending-badge').textContent = data.pending || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Quick verify from overview
+        document.getElementById('quick-verify-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = document.getElementById('quick-token').value;
+            const resultDiv = document.getElementById('quick-verify-result');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/pharmacist/verify-token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.valid) {
+                    resultDiv.style.display = 'block';
+                    resultDiv.style.background = '#d1fae5';
+                    resultDiv.style.border = '1px solid #6ee7b7';
+                    resultDiv.style.color = '#065f46';
+                    resultDiv.style.padding = '1rem';
+                    resultDiv.style.borderRadius = '0.5rem';
+                    resultDiv.innerHTML = `
+                        <strong>✓ Valid Token</strong><br>
+                        Prescription: ${data.prescription.medication_name}<br>
+                        Patient: ${data.prescription.patient_name}
+                    `;
+                } else {
+                    resultDiv.style.display = 'block';
+                    resultDiv.style.background = '#fee2e2';
+                    resultDiv.style.border = '1px solid #fca5a5';
+                    resultDiv.style.color = '#991b1b';
+                    resultDiv.style.padding = '1rem';
+                    resultDiv.style.borderRadius = '0.5rem';
+                    resultDiv.innerHTML = `<strong>✗ Invalid Token</strong><br>${data.error || 'Token not found or expired'}`;
+                }
+            } catch (error) {
+                console.error('Error verifying token:', error);
+            }
+        });
+
+        // Verify token (full page)
+        document.getElementById('token-verify-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = document.getElementById('access-token').value;
+            const resultDiv = document.getElementById('token-result');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/pharmacist/verify-token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.valid) {
+                    resultDiv.style.display = 'block';
+                    resultDiv.innerHTML = `
+                        <div class="section-card" style="background: #d1fae5; border-color: #6ee7b7;">
+                            <h3 style="color: #065f46;">✓ Valid Access Token</h3>
+                            <p><strong>Prescription ID:</strong> ${data.prescription.id}</p>
+                            <p><strong>Patient:</strong> ${data.prescription.patient_name}</p>
+                            <p><strong>Medication:</strong> ${data.prescription.medication_name}</p>
+                            <p><strong>Dosage:</strong> ${data.prescription.dosage}</p>
+                            <p><strong>Quantity:</strong> ${data.prescription.quantity}</p>
+                            <button onclick="initiateDispense(${data.prescription.id})" class="btn btn-primary">Proceed to Dispense</button>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.style.display = 'block';
+                    resultDiv.innerHTML = `
+                        <div class="section-card" style="background: #fee2e2; border-color: #fca5a5;">
+                            <h3 style="color: #991b1b;">✗ Invalid Token</h3>
+                            <p>${data.error || 'Token not found or has expired'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error verifying token:', error);
+            }
+        });
+
+        // Load pending prescriptions
+        async function loadPendingPrescriptions() {
+            const tbody = document.getElementById('pending-prescriptions-table');
+            tbody.innerHTML = '<tr><td colspan="8" class="table-empty">Loading...</td></tr>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/pharmacist/pending`);
+                if (!response.ok) throw new Error('Failed to load pending prescriptions');
+                
+                const prescriptions = await response.json();
+                
+                if (prescriptions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="table-empty">No pending prescriptions</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = prescriptions.map(p => `
+                    <tr>
+                        <td class="table-cell-secondary">#${p.id}</td>
+                        <td><span class="table-cell-primary">${p.patient_name}</span></td>
+                        <td><span class="table-cell-primary">${p.medication_name}</span></td>
+                        <td>${p.dosage}</td>
+                        <td>${p.quantity}</td>
+                        <td class="table-cell-secondary">${p.doctor_name}</td>
+                        <td class="table-cell-secondary">${new Date(p.created_at).toLocaleDateString()}</td>
+                        <td><button onclick="initiateDispense(${p.id})" class="btn btn-sm btn-primary">Dispense</button></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading pending prescriptions:', error);
+                tbody.innerHTML = '<tr><td colspan="8" class="table-empty">Failed to load prescriptions</td></tr>';
+            }
+        }
+
+        // Load history
+        async function loadHistory() {
+            const filter = document.getElementById('history-filter').value;
+            const tbody = document.getElementById('history-table');
+            tbody.innerHTML = '<tr><td colspan="7" class="table-empty">Loading...</td></tr>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/pharmacist/history?filter=${filter}`);
+                if (!response.ok) throw new Error('Failed to load history');
+                
+                const prescriptions = await response.json();
+                
+                if (prescriptions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No dispensing history</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = prescriptions.map(p => `
+                    <tr>
+                        <td class="table-cell-secondary">#${p.id}</td>
+                        <td>${p.patient_name}</td>
+                        <td>${p.medication_name}</td>
+                        <td>${p.quantity}</td>
+                        <td class="table-cell-secondary">${p.doctor_name}</td>
+                        <td class="table-cell-secondary">${new Date(p.dispensed_at).toLocaleString()}</td>
+                        <td><span class="badge badge-success">DISPENSED</span></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading history:', error);
+                tbody.innerHTML = '<tr><td colspan="7" class="table-empty">Failed to load history</td></tr>';
+            }
+        }
+
+        function initiateDispense(prescriptionId) {
+            currentPrescriptionId = prescriptionId;
+            document.getElementById('dispense-modal').style.display = 'flex';
+            document.getElementById('dispense-details').innerHTML = `
+                <p>Confirm dispensing prescription #${prescriptionId}?</p>
+            `;
+        }
+
+        function closeDispenseModal() {
+            document.getElementById('dispense-modal').style.display = 'none';
+        }
+
+        async function confirmDispense() {
+            if (!currentPrescriptionId) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/pharmacist/dispense/${currentPrescriptionId}`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    alert('✅ Prescription dispensed successfully!');
+                    closeDispenseModal();
+                    await loadStats();
+                    await loadPendingPrescriptions();
+                } else {
+                    const data = await response.json();
+                    alert(`❌ Error: ${data.error || 'Failed to dispense'}`);
+                }
+            } catch (error) {
+                console.error('Error dispensing:', error);
+                alert('❌ Failed to dispense prescription');
+            }
+        }
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+        });
+    </script>
+</body>
+</html>

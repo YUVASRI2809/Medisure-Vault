@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register as Authority - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .register-container {
+            max-width: 500px;
+            margin: 50px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .register-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .register-header h1 {
+            color: #667eea;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .register-header p {
+            color: #666;
+            font-size: 1rem;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn-register {
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn-register:hover {
+            background: #5568d3;
+        }
+        .btn-register:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .error-message {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .success-message {
+            background: #d1fae5;
+            border: 1px solid #6ee7b7;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        .password-strength {
+            font-size: 0.85rem;
+            margin-top: 5px;
+            color: #666;
+        }
+        .optional-badge {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            font-weight: 400;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <h1>👨‍⚕️ Authority Registration</h1>
+            <p>For Doctors, Pharmacists, and Administrators</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="role">Role *</label>
+                <select id="role" name="role" required>
+                    <option value="">Select your role</option>
+                    <option value="DOCTOR">Doctor</option>
+                    <option value="PHARMACIST">Pharmacist</option>
+                    <option value="ADMIN">Administrator</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="fullName">Full Name *</label>
+                <input type="text" id="fullName" name="fullName" required placeholder="Dr. John Smith">
+            </div>
+
+            <div class="form-group">
+                <label for="username">Username *</label>
+                <input type="text" id="username" name="username" required placeholder="jsmith" minlength="3">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" name="email" required placeholder="doctor@hospital.com">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <input type="password" id="password" name="password" required minlength="8" placeholder="Minimum 8 characters">
+                <div class="password-strength">Must be at least 8 characters long</div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password *</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8">
+            </div>
+
+            <div class="form-group" id="licenseGroup" style="display: none;">
+                <label for="licenseNumber">License Number <span class="optional-badge">(Optional)</span></label>
+                <input type="text" id="licenseNumber" name="licenseNumber" placeholder="e.g., MD123456">
+            </div>
+
+            <div class="form-group" id="pharmacyGroup" style="display: none;">
+                <label for="pharmacyId">Pharmacy ID <span class="optional-badge">(Optional)</span></label>
+                <input type="text" id="pharmacyId" name="pharmacyId" placeholder="e.g., PHM001">
+            </div>
+
+            <button type="submit" class="btn-register" id="submitBtn">Register</button>
+        </form>
+
+        <div class="back-link">
+            <a href="/">← Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        const roleSelect = document.getElementById('role');
+        const licenseGroup = document.getElementById('licenseGroup');
+        const pharmacyGroup = document.getElementById('pharmacyGroup');
+        const registerForm = document.getElementById('registerForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Show/hide optional fields based on role
+        roleSelect.addEventListener('change', function() {
+            const role = this.value;
+            
+            if (role === 'DOCTOR') {
+                licenseGroup.style.display = 'block';
+                pharmacyGroup.style.display = 'none';
+            } else if (role === 'PHARMACIST') {
+                licenseGroup.style.display = 'block';
+                pharmacyGroup.style.display = 'block';
+            } else {
+                licenseGroup.style.display = 'none';
+                pharmacyGroup.style.display = 'none';
+            }
+        });
+
+        // Handle form submission
+        registerForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Hide previous messages
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+
+            // Get form values
+            const role = document.getElementById('role').value;
+            const fullName = document.getElementById('fullName').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const licenseNumber = document.getElementById('licenseNumber').value.trim();
+            const pharmacyId = document.getElementById('pharmacyId').value.trim();
+
+            // Client-side validation
+            if (!role) {
+                showError('Please select a role');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+
+            if (password.length < 8) {
+                showError('Password must be at least 8 characters long');
+                return;
+            }
+
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Registering...';
+
+            // Prepare registration data
+            const registrationData = {
+                role: role,
+                full_name: fullName,
+                username: username,
+                email: email,
+                password: password
+            };
+
+            // Add optional fields if provided
+            if (licenseNumber) {
+                registrationData.license_number = licenseNumber;
+            }
+            if (pharmacyId) {
+                registrationData.pharmacy_id = pharmacyId;
+            }
+
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(registrationData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('Registration successful! Redirecting to login...');
+                    registerForm.reset();
+                    
+                    // Redirect to authority login after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/authority-login';
+                    }, 2000);
+                } else {
+                    showError(data.error || 'Registration failed. Please try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Register';
+                }
+            } catch (error) {
+                showError('Network error. Please check your connection and try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Register';
+            }
+        });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            errorMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            successMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    </script>
+</body>
+</html>

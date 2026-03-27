@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediSure Vault - Premium Dashboard Preview</title>
+    <link rel="stylesheet" href="static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="doctor-dashboard">
+    
+    <!-- Dashboard Layout -->
+    <div class="dashboard-layout">
+        
+        <!-- Top Navbar with Glassmorphism -->
+        <nav class="top-navbar">
+            <div class="nav-left">
+                <div class="nav-brand">🏥 MediSure Vault</div>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-icon">
+                    <span class="notification-badge">3</span>
+                    🔔
+                </button>
+                <button class="nav-icon">⚙️</button>
+                <div class="nav-user">
+                    <span>Dr. Smith</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Sidebar with Ripple Effects -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Main Menu</div>
+                <a href="#" class="sidebar-link active">
+                    <span class="sidebar-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">📝</span>
+                    <span>Prescriptions</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">👥</span>
+                    <span>Patients</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">🔐</span>
+                    <span>Blockchain Ledger</span>
+                </a>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Settings</div>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">⚙️</span>
+                    <span>Configuration</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">🚪</span>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="dashboard-main">
+            <div class="dashboard-content">
+                
+                <!-- Page Header -->
+                <div class="page-header">
+                    <h1>Doctor Dashboard</h1>
+                    <p class="page-subtitle">Welcome back! Here's your overview</p>
+                </div>
+
+                <!-- KPI Cards with Hover Lift Effect -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon primary">📋</div>
+                        <div class="stat-value">248</div>
+                        <div class="stat-label">Total Prescriptions</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon success">✅</div>
+                        <div class="stat-value">189</div>
+                        <div class="stat-label">Dispensed</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon warning">⏳</div>
+                        <div class="stat-value">42</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon danger">❌</div>
+                        <div class="stat-value">17</div>
+                        <div class="stat-label">Anomalies Detected</div>
+                    </div>
+                </div>
+
+                <!-- Section Card with Premium Styling -->
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <h2 class="section-card-title">Recent Prescriptions</h2>
+                        <button class="btn btn-primary">+ New Prescription</button>
+                    </div>
+                    <div class="section-card-body">
+                        
+                        <!-- Data Table with Row Hover -->
+                        <div class="data-table">
+                            <div class="table-header">
+                                <div class="table-title">Latest Activity</div>
+                                <div class="table-actions">
+                                    <button class="btn btn-secondary btn-sm">Filter</button>
+                                    <button class="btn btn-secondary btn-sm">Export</button>
+                                </div>
+                            </div>
+                            
+                            <div class="table-wrapper">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient ID</th>
+                                            <th>Patient Name</th>
+                                            <th>Medication</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="table-cell-primary">PAT-001</td>
+                                            <td>John Anderson</td>
+                                            <td>Amoxicillin 500mg</td>
+                                            <td>2024-01-15</td>
+                                            <td><span class="badge badge-success">Dispensed</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary">View</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="table-cell-primary">PAT-002</td>
+                                            <td>Sarah Williams</td>
+                                            <td>Lisinopril 10mg</td>
+                                            <td>2024-01-15</td>
+                                            <td><span class="badge badge-pending">Pending</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary">View</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="table-cell-primary">PAT-003</td>
+                                            <td>Michael Brown</td>
+                                            <td>Metformin 1000mg</td>
+                                            <td>2024-01-14</td>
+                                            <td><span class="badge badge-success">Dispensed</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary">View</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="table-cell-primary">PAT-004</td>
+                                            <td>Emily Davis</td>
+                                            <td>Atorvastatin 20mg</td>
+                                            <td>2024-01-14</td>
+                                            <td><span class="badge badge-warning">Pending</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary">View</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="table-cell-primary">PAT-005</td>
+                                            <td>David Martinez</td>
+                                            <td>Omeprazole 40mg</td>
+                                            <td>2024-01-13</td>
+                                            <td><span class="badge badge-locked">Locked</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-danger">Alert</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+
+                <!-- Alert Examples -->
+                <div class="alert alert-success">
+                    ✅ Successfully created prescription for patient PAT-006
+                </div>
+
+                <div class="alert alert-warning">
+                    ⚠️ 3 prescriptions require your attention
+                </div>
+
+                <!-- Button Showcase -->
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <h2 class="section-card-title">Interactive Components</h2>
+                    </div>
+                    <div class="section-card-body">
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
+                            <button class="btn btn-primary">Primary Button</button>
+                            <button class="btn btn-secondary">Secondary Button</button>
+                            <button class="btn btn-success">Success Button</button>
+                            <button class="btn btn-warning">Warning Button</button>
+                            <button class="btn btn-danger">Danger Button</button>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
+                            <button class="btn btn-primary btn-sm">Small Button</button>
+                            <button class="btn btn-primary">Regular Button</button>
+                            <button class="btn btn-primary btn-lg">Large Button</button>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <span class="badge badge-success">Success</span>
+                            <span class="badge badge-pending">Pending</span>
+                            <span class="badge badge-danger">Danger</span>
+                            <span class="badge badge-info">Info</span>
+                            <span class="badge badge-draft">Draft</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Example -->
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <h2 class="section-card-title">Premium Form Inputs</h2>
+                    </div>
+                    <div class="section-card-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Patient Name</label>
+                                <input type="text" class="form-input" placeholder="Enter patient name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Medication</label>
+                                <input type="text" class="form-input" placeholder="Enter medication">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-textarea" rows="3" placeholder="Add notes..."></textarea>
+                        </div>
+                        <button class="btn btn-primary btn-block">Submit Prescription</button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Modal Example (hidden by default) -->
+    <div class="modal" id="exampleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Prescription Details</h3>
+                <button class="modal-close" onclick="document.getElementById('exampleModal').classList.remove('active')">×</button>
+            </div>
+            <div class="modal-body">
+                <p>This is a premium modal with backdrop blur effect and smooth slide-up animation.</p>
+                <p>Click the close button or outside the modal to dismiss.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('exampleModal').classList.remove('active')">Cancel</button>
+                <button class="btn btn-primary" onclick="document.getElementById('exampleModal').classList.remove('active')">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple modal trigger
+        setTimeout(() => {
+            // Uncomment to test modal on page load
+            // document.getElementById('exampleModal').classList.add('active');
+        }, 1000);
+
+        // Close modal when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('active');
+            }
+        });
+    </script>
+
+</body>
+</html>

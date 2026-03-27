@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏥 MediSure Vault</h1>
+            <p class="subtitle">Blockchain Prescription Management System</p>
+            <div id="systemStatus" class="status-indicator">
+                <span class="status-dot"></span>
+                <span id="statusText">Checking system...</span>
+            </div>
+        </header>
+
+        <nav class="navigation-bar">
+            <a href="/dashboard" class="nav-btn active">📊 Dashboard</a>
+            <a href="/prescriptions-manager" class="nav-btn">📋 Prescriptions</a>
+            <a href="/token-manager" class="nav-btn">🔑 Tokens</a>
+            <a href="/collision-monitor" class="nav-btn">⚠️ Collisions</a>
+            <a href="/anomaly-dashboard" class="nav-btn">🚨 Anomalies</a>
+        </nav>
+
+        <div id="messageBox" class="message-box hidden"></div>
+
+        <!-- Dashboard Welcome -->
+        <section class="welcome-card card">
+            <h2>Welcome, <span id="userName">{{ username }}</span>!</h2>
+            <p>Role: <span id="userRole" class="badge">{{ role }}</span></p>
+            <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+        </section>
+
+        <!-- Quick Stats -->
+        <section class="card">
+            <h3>📊 System Overview</h3>
+            <div id="quickStats" class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">System Status</div>
+                    <div class="stat-value" id="systemHealthStat">🟢 Healthy</div>
+                </div>
+            </div>
+            <button id="refreshStatsBtn" class="btn btn-info">🔄 Refresh Stats</button>
+        </section>
+
+        <!-- Quick Actions -->
+        <section class="card">
+            <h3>⚡ Quick Actions</h3>
+            <div class="quick-actions-grid">
+                <a href="/prescriptions-manager" class="action-card">
+                    <div class="action-icon">📋</div>
+                    <div class="action-title">Manage Prescriptions</div>
+                    <div class="action-desc">View, create, and manage prescriptions</div>
+                </a>
+
+                <a href="/token-manager" class="action-card">
+                    <div class="action-icon">🔑</div>
+                    <div class="action-title">Access Tokens</div>
+                    <div class="action-desc">Generate time-bound sharing tokens</div>
+                </a>
+
+                <a href="/collision-monitor" class="action-card">
+                    <div class="action-icon">⚠️</div>
+                    <div class="action-title">Collision Monitor</div>
+                    <div class="action-desc">Multi-pharmacy collision detection</div>
+                </a>
+
+                <a href="/anomaly-dashboard" class="action-card">
+                    <div class="action-icon">🚨</div>
+                    <div class="action-title">Anomaly Detection</div>
+                    <div class="action-desc">Risk monitoring and alerts</div>
+                </a>
+            </div>
+        </section>
+
+        <!-- System Health Check -->
+        <section class="card">
+            <h3>🔧 System Health Check</h3>
+            <button id="healthCheckBtn" class="btn btn-info">Run Health Check</button>
+            <div id="healthResult" class="result-box hidden"></div>
+        </section>
+
+        <!-- Feature Highlights -->
+        <section class="card">
+            <h3>✨ Available Features</h3>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <h4>🔒 Post-Dispense Locking</h4>
+                    <p>Permanently lock dispensed prescriptions to prevent tampering</p>
+                    <span class="feature-status">✅ Active</span>
+                </div>
+
+                <div class="feature-item">
+                    <h4>⏱️ Time-Bound Tokens</h4>
+                    <p>Generate expiring access tokens for secure prescription sharing</p>
+                    <span class="feature-status">✅ Active</span>
+                </div>
+
+                <div class="feature-item">
+                    <h4>🎯 Tamper Scoring</h4>
+                    <p>Real-time tamper evidence scoring (0-100) with severity labels</p>
+                    <span class="feature-status">✅ Active</span>
+                </div>
+
+                <div class="feature-item">
+                    <h4>🚨 Anomaly Detection</h4>
+                    <p>Detect risky prescriptions and controlled substances</p>
+                    <span class="feature-status">✅ Active</span>
+                </div>
+
+                <div class="feature-item">
+                    <h4>⚠️ Collision Detection</h4>
+                    <p>Prevent duplicate dispensing across multiple pharmacies</p>
+                    <span class="feature-status">✅ Active</span>
+                </div>
+
+                <div class="feature-item">
+                    <h4>🔗 Blockchain Audit</h4>
+                    <p>Immutable audit trail with blockchain verification</p>
+                    <span class="feature-status">✅ Active</span>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>© 2026 MediSure Vault - Secure Healthcare Infrastructure</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>
