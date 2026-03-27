@@ -12,29 +12,38 @@ from datetime import datetime
 import json
 
 
-def log_audit_event(event_type, user_id=None, prescription_id=None, details=None, 
-                   ip_address=None, user_agent=None, is_emergency_access=False, 
-                   emergency_justification=None):
+def log_audit_event(event_type, user_id=None, prescription_id=None, details=None,
+                   ip_address=None, user_agent=None, is_emergency_access=False,
+                   emergency_justification=None, status='SUCCESS', role=None):
     """
     Log an immutable audit event.
-    Critical events are also recorded in the blockchain.
-    
+
     Args:
-        event_type (str): Type of event being logged
-        user_id (int): User ID who performed the action (optional)
+        event_type (str):   Type of event being logged
+        user_id (int):      User ID who performed the action (optional)
         prescription_id (int): Related prescription ID (optional)
-        details (dict): Additional event details (optional)
-        ip_address (str): IP address of the request (optional)
-        user_agent (str): User agent string (optional)
+        details (dict):     Additional event details (optional)
+        ip_address (str):   IP address of the request (optional)
+        user_agent (str):   User agent string (optional)
         is_emergency_access (bool): Whether this is an emergency access event
         emergency_justification (str): Justification for emergency access (optional)
-        
+        status (str):       'SUCCESS', 'FAILED', or 'WARNING'
+        role (str):         Role of the acting user (auto-resolved from session if None)
+
     Returns:
         AuditLog: Created audit log entry
     """
     if not Config.AUDIT_LOG['ENABLED']:
         return None
-    
+
+    # Auto-resolve role from Flask session if not provided
+    if role is None:
+        try:
+            from flask import session
+            role = session.get('role', 'SYSTEM')
+        except RuntimeError:
+            role = 'SYSTEM'
+
     # Create audit log entry
     audit_entry = AuditLog(
         event_type=event_type,
@@ -45,7 +54,9 @@ def log_audit_event(event_type, user_id=None, prescription_id=None, details=None
         ip_address=ip_address,
         user_agent=user_agent,
         is_emergency_access=is_emergency_access,
-        emergency_justification=emergency_justification
+        emergency_justification=emergency_justification,
+        status=status,
+        role=role
     )
     
     db.session.add(audit_entry)

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispensing History - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f9fafb 0%, #f0f4f8 100%);
+        }
+
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, .95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--color-gray-200);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 64px;
+        }
+
+        .top-bar-brand {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-secondary);
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .top-bar-nav {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .top-bar-nav a {
+            padding: .45rem .9rem;
+            border-radius: var(--radius-lg);
+            font-size: .875rem;
+            font-weight: 500;
+            color: var(--color-gray-600);
+            transition: all .15s;
+        }
+
+        .top-bar-nav a:hover {
+            background: var(--color-secondary-50, #f0fdfa);
+            color: var(--color-secondary);
+        }
+
+        .top-bar-nav a.btn-logout {
+            color: var(--color-danger);
+        }
+
+        .top-bar-nav a.btn-logout:hover {
+            background: var(--color-danger-light);
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-size: .85rem;
+            color: var(--color-gray-500);
+            margin-bottom: 1.5rem;
+        }
+
+        .breadcrumb a {
+            color: var(--color-secondary);
+            font-weight: 500;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 0 1.5rem;
+            color: var(--color-gray-900);
+        }
+
+        /* Filter tabs */
+        .filter-tabs {
+            display: flex;
+            gap: .5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: .45rem 1rem;
+            border-radius: var(--radius-lg);
+            font-size: .875rem;
+            font-weight: 600;
+            border: 1.5px solid var(--color-gray-300);
+            background: #fff;
+            color: var(--color-gray-600);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all .15s;
+        }
+
+        .filter-tab:hover {
+            border-color: var(--color-secondary);
+            color: var(--color-secondary);
+        }
+
+        .filter-tab.active {
+            background: var(--color-secondary);
+            color: #fff;
+            border-color: var(--color-secondary);
+        }
+
+        /* Table */
+        .table-card {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-200);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--color-gray-50);
+        }
+
+        th {
+            padding: .75rem 1rem;
+            text-align: left;
+            font-size: .78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--color-gray-500);
+            border-bottom: 1px solid var(--color-gray-200);
+        }
+
+        td {
+            padding: .85rem 1rem;
+            font-size: .875rem;
+            color: var(--color-gray-800);
+            border-bottom: 1px solid var(--color-gray-100);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: var(--color-gray-50);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: .2rem .65rem;
+            border-radius: var(--radius-full);
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .badge-locked {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-dispensed {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        /* View link */
+        .btn-view {
+            padding: .3rem .75rem;
+            border-radius: var(--radius-md);
+            background: var(--color-secondary-100, #ccfbf1);
+            color: var(--color-secondary-dark, #0f766e);
+            font-size: .78rem;
+            font-weight: 600;
+            border: 1px solid var(--color-secondary-200, #99f6e4);
+            text-decoration: none;
+            transition: all .15s;
+        }
+
+        .btn-view:hover {
+            background: var(--color-secondary);
+            color: #fff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--color-gray-400);
+            font-size: .95rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="top-bar">
+        <div class="top-bar-brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="9" y1="9" x2="15" y2="9" />
+                <line x1="9" y1="15" x2="15" y2="15" />
+            </svg>
+            MediSure Vault
+        </div>
+        <div class="top-bar-nav">
+            <a href="{{ url_for('pharmacist.dashboard') }}">← Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+        </div>
+    </nav>
+
+    <div class="page">
+
+        <div class="breadcrumb">
+            <a href="{{ url_for('pharmacist.dashboard') }}">Dashboard</a>
+            <span>›</span><span>Dispensing History</span>
+        </div>
+
+        <h1 class="page-title">📋 Dispensing History</h1>
+
+        <!-- Filter tabs -->
+        <div class="filter-tabs">
+            <a href="{{ url_for('pharmacist.history', filter='all') }}"
+                class="filter-tab {% if filter_type == 'all'  %}active{% endif %}">All Time</a>
+            <a href="{{ url_for('pharmacist.history', filter='today') }}"
+                class="filter-tab {% if filter_type == 'today'%}active{% endif %}">Today</a>
+            <a href="{{ url_for('pharmacist.history', filter='week') }}"
+                class="filter-tab {% if filter_type == 'week' %}active{% endif %}">Last 7 Days</a>
+        </div>
+
+        <div class="table-card">
+            {% if prescriptions %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Medication</th>
+                        <th>Patient</th>
+                        <th>Doctor</th>
+                        <th>Dosage</th>
+                        <th>Qty</th>
+                        <th>State</th>
+                        <th>Dispensed At</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in prescriptions %}
+                    <tr>
+                        <td style="color:var(--color-gray-400);font-size:.8rem;">#{{ p.id }}</td>
+                        <td style="font-weight:600;">{{ p.medication_name }}</td>
+                        <td>{{ p.patient.full_name if p.patient else '—' }}</td>
+                        <td>Dr. {{ p.doctor.full_name if p.doctor else '—' }}</td>
+                        <td>{{ p.dosage }}</td>
+                        <td>{{ p.quantity }}</td>
+                        <td><span class="badge badge-{{ p.state.lower() }}">{{ p.state }}</span></td>
+                        <td>{{ p.dispensed_at.strftime('%d %b %Y, %H:%M') if p.dispensed_at else '—' }}</td>
+                        <td><a href="{{ url_for('pharmacist.view_prescription', prescription_id=p.id) }}"
+                                class="btn-view">View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">No dispensed prescriptions found for this period.</div>
+            {% endif %}
+        </div>
+
+    </div>
+</body>
+
+</html>

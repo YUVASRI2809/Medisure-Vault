@@ -1,156 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Registration - MediSure Vault</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
                 <div class="auth-logo" style="background: #f3e8ff;">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
-                        <circle cx="12" cy="8" r="4"/>
-                        <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
                     </svg>
                 </div>
                 <h1 class="auth-title">Patient Registration</h1>
                 <p class="auth-subtitle">Create your secure prescription account</p>
             </div>
 
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.875rem;">
+            <div
+                style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;padding:1rem;border-radius:0.5rem;margin-bottom:1.5rem;font-size:0.875rem;">
                 As a patient, you can securely access your prescriptions and share them with authorized pharmacies.
             </div>
 
-            <div id="errorMessage" style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; display: none;"></div>
-            <div id="successMessage" style="background: #d1fae5; border: 1px solid #6ee7b7; color: #065f46; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; display: none;"></div>
+            <!-- Flash message banner -->
+            <div id="flashMessage" style="display:none;"></div>
 
-            <form id="registerForm">
+            <form id="registerForm" novalidate>
                 <div class="form-group">
                     <label for="fullName" class="form-label">Full Name *</label>
-                    <input type="text" id="fullName" name="fullName" class="form-input" required placeholder="Jane Doe">
+                    <input type="text" id="fullName" name="fullName" class="form-input" placeholder="Jane Doe">
                 </div>
-
                 <div class="form-group">
                     <label for="username" class="form-label">Username *</label>
-                    <input type="text" id="username" name="username" class="form-input" required placeholder="janedoe" minlength="3">
+                    <input type="text" id="username" name="username" class="form-input" placeholder="janedoe">
                 </div>
-
                 <div class="form-group">
                     <label for="email" class="form-label">Email Address *</label>
-                    <input type="email" id="email" name="email" class="form-input" required placeholder="jane@example.com">
+                    <input type="email" id="email" name="email" class="form-input" placeholder="jane@example.com">
                 </div>
-
                 <div class="form-group">
                     <label for="password" class="form-label">Password *</label>
-                    <input type="password" id="password" name="password" class="form-input" required minlength="8" placeholder="Minimum 8 characters">
-                    <div style="font-size: 0.875rem; margin-top: 0.25rem; color: #6b7280;">Must be at least 8 characters long</div>
+                    <input type="password" id="password" name="password" class="form-input"
+                        placeholder="Minimum 8 characters">
+                    <!-- strength bar injected here by auth.js -->
                 </div>
-
                 <div class="form-group">
                     <label for="confirmPassword" class="form-label">Confirm Password *</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" required minlength="8">
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
+                        placeholder="Re-enter password">
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitBtn">Register</button>
+                <button type="submit" id="submitBtn" class="btn btn-primary btn-block btn-lg">Register</button>
             </form>
 
             <div class="auth-footer">
-                <p>Already have an account? <a href="{{ url_for('auth.patient_login') }}">Login here</a></p>
-                <p><a href="{{ url_for('landing') }}">← Back to Home</a></p>
+                <p>Already have an account? <a href="/patient-login">Login here</a></p>
+                <p><a href="/">← Back to Home</a></p>
             </div>
         </div>
     </div>
 
+    <script src="{{ url_for('static', filename='auth.js') }}"></script>
     <script>
-        const registerForm = document.getElementById('registerForm');
-        const errorMessage = document.getElementById('errorMessage');
-        const successMessage = document.getElementById('successMessage');
+        const form = document.getElementById('registerForm');
+        const fullName = document.getElementById('fullName');
+        const username = document.getElementById('username');
+        const email = document.getElementById('email');
+        const password = document.getElementById('password');
+        const confirm = document.getElementById('confirmPassword');
         const submitBtn = document.getElementById('submitBtn');
 
-        // Handle form submission
-        registerForm.addEventListener('submit', async function(e) {
+        // Real-time blur validation
+        fullName.addEventListener('blur', () => {
+            !fullName.value.trim() ? setFieldError(fullName, 'Full name is required') : clearFieldError(fullName);
+        });
+        fullName.addEventListener('input', () => clearFieldError(fullName));
+
+        username.addEventListener('blur', () => {
+            const err = validateUsername(username.value.trim());
+            err ? setFieldError(username, err) : clearFieldError(username);
+        });
+        username.addEventListener('input', () => clearFieldError(username));
+
+        email.addEventListener('blur', () => {
+            const err = validateEmail(email.value.trim());
+            err ? setFieldError(email, err) : clearFieldError(email);
+        });
+        email.addEventListener('input', () => clearFieldError(email));
+
+        // Password strength meter on input
+        password.addEventListener('input', () => {
+            renderStrengthBar(password);
+            clearFieldError(password);
+            // Live confirm match check
+            if (confirm.value) {
+                const err = validateConfirmPassword(password.value, confirm.value);
+                err ? setFieldError(confirm, err) : clearFieldError(confirm);
+            }
+        });
+        password.addEventListener('blur', () => {
+            const err = validatePassword(password.value);
+            err ? setFieldError(password, err) : clearFieldError(password);
+        });
+
+        confirm.addEventListener('input', () => {
+            const err = validateConfirmPassword(password.value, confirm.value);
+            err ? setFieldError(confirm, err) : clearFieldError(confirm);
+        });
+
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            // Hide previous messages
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
 
-            // Get form values
-            const fullName = document.getElementById('fullName').value.trim();
-            const username = document.getElementById('username').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            // Client-side validation
-            if (password !== confirmPassword) {
-                showError('Passwords do not match');
+            // Full validation pass
+            let valid = true;
+            if (!fullName.value.trim()) { setFieldError(fullName, 'Full name is required'); valid = false; }
+            const uErr = validateUsername(username.value.trim());
+            if (uErr) { setFieldError(username, uErr); valid = false; }
+            const eErr = validateEmail(email.value.trim());
+            if (eErr) { setFieldError(email, eErr); valid = false; }
+            const pErr = validatePassword(password.value);
+            if (pErr) { setFieldError(password, pErr); valid = false; }
+            const cErr = validateConfirmPassword(password.value, confirm.value);
+            if (cErr) { setFieldError(confirm, cErr); valid = false; }
+            if (!valid) {
+                flashMessage('Please fix the errors above before submitting.', 'warning');
                 return;
             }
 
-            if (password.length < 8) {
-                showError('Password must be at least 8 characters long');
-                return;
-            }
-
-            // Disable submit button
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Registering...';
-
-            // Prepare registration data (always PATIENT role)
-            const registrationData = {
-                role: 'PATIENT',
-                full_name: fullName,
-                username: username,
-                email: email,
-                password: password
-            };
+            setLoading(submitBtn, true, 'Register');
 
             try {
                 const response = await fetch('/auth/register', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(registrationData)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        role: 'PATIENT',
+                        full_name: fullName.value.trim(),
+                        username: username.value.trim(),
+                        email: email.value.trim(),
+                        password: password.value
+                    })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    showSuccess('Registration successful! Redirecting to login...');
-                    registerForm.reset();
-                    
-                    // Redirect to patient login after 2 seconds
-                    setTimeout(() => {
-                        window.location.href = '/patient-login';
-                    }, 2000);
+                    flashMessage('Registration successful! Redirecting to login...', 'success');
+                    form.reset();
+                    setTimeout(() => { window.location.href = '/patient-login'; }, 2000);
                 } else {
-                    showError(data.error || 'Registration failed. Please try again.');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Register';
+                    flashMessage(data.error || 'Registration failed. Please try again.', 'error');
+                    setLoading(submitBtn, false, 'Register');
                 }
-            } catch (error) {
-                showError('Network error. Please check your connection and try again.');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Register';
+            } catch {
+                flashMessage('Network error. Please check your connection.', 'error');
+                setLoading(submitBtn, false, 'Register');
             }
         });
-
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-            errorMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        function showSuccess(message) {
-            successMessage.textContent = message;
-            successMessage.style.display = 'block';
-            successMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
     </script>
 </body>
+
 </html>

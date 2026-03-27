@@ -1,348 +1,577 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pharmacist Dashboard - MediSure Vault</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f9fafb 0%, #f0f4f8 100%);
+        }
+
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, .95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--color-gray-200);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 64px;
+        }
+
+        .top-bar-brand {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-secondary);
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .top-bar-nav {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .top-bar-nav a {
+            padding: .45rem .9rem;
+            border-radius: var(--radius-lg);
+            font-size: .875rem;
+            font-weight: 500;
+            color: var(--color-gray-600);
+            transition: all .15s;
+        }
+
+        .top-bar-nav a:hover {
+            background: var(--color-secondary-50, #f0fdfa);
+            color: var(--color-secondary);
+        }
+
+        .top-bar-nav a.active {
+            background: var(--color-secondary);
+            color: #fff;
+        }
+
+        .top-bar-nav a.btn-history {
+            background: var(--color-gray-100);
+            color: var(--color-gray-700);
+        }
+
+        .top-bar-nav a.btn-history:hover {
+            background: var(--color-gray-200);
+        }
+
+        .top-bar-nav a.btn-logout {
+            color: var(--color-danger);
+        }
+
+        .top-bar-nav a.btn-logout:hover {
+            background: var(--color-danger-light);
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Welcome banner */
+        .welcome-banner {
+            background: linear-gradient(135deg, var(--color-secondary) 0%, #0f766e 100%);
+            border-radius: var(--radius-xl);
+            padding: 1.75rem 2rem;
+            color: #fff;
+            margin-bottom: 1.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 8px 24px rgba(13, 148, 136, .25);
+        }
+
+        .welcome-banner h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 0 0 .25rem;
+            color: #fff;
+        }
+
+        .welcome-banner p {
+            margin: 0;
+            opacity: .85;
+            font-size: .9rem;
+        }
+
+        .badge-license {
+            background: rgba(255, 255, 255, .15);
+            border: 1px solid rgba(255, 255, 255, .3);
+            padding: .35rem .85rem;
+            border-radius: var(--radius-full);
+            font-size: .8rem;
+            font-weight: 600;
+        }
+
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .stat-tile {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            padding: 1.25rem 1.5rem;
+            border: 1px solid var(--color-gray-200);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .stat-tile:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .09);
+        }
+
+        .stat-tile .num {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: .3rem;
+        }
+
+        .stat-tile .lbl {
+            font-size: .78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--color-gray-500);
+        }
+
+        .stat-tile.shared .num {
+            color: var(--color-secondary);
+        }
+
+        .stat-tile.today .num {
+            color: var(--color-success-dark);
+        }
+
+        .stat-tile.total .num {
+            color: var(--color-primary);
+        }
+
+        .stat-tile.locked .num {
+            color: var(--color-danger-dark);
+        }
+
+        /* Section card */
+        .section-card {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-200);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.1rem 1.5rem;
+            border-bottom: 1px solid var(--color-gray-100);
+            flex-wrap: wrap;
+            gap: .75rem;
+        }
+
+        .section-head h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--color-gray-800);
+        }
+
+        .section-body {
+            padding: 1.25rem 1.5rem;
+        }
+
+        /* Filter */
+        .filter-bar {
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+        }
+
+        .filter-bar select {
+            padding: .4rem .75rem;
+            border: 1px solid var(--color-gray-300);
+            border-radius: var(--radius-md);
+            font-size: .85rem;
+            color: var(--color-gray-700);
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .filter-bar select:focus {
+            outline: none;
+            border-color: var(--color-secondary);
+        }
+
+        .btn-refresh {
+            padding: .4rem .85rem;
+            border: 1px solid var(--color-gray-300);
+            border-radius: var(--radius-md);
+            background: #fff;
+            font-size: .85rem;
+            cursor: pointer;
+            color: var(--color-gray-600);
+            transition: all .15s;
+        }
+
+        .btn-refresh:hover {
+            background: var(--color-gray-50);
+        }
+
+        /* Prescription grid */
+        .rx-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+
+        .rx-card {
+            border: 1px solid var(--color-gray-200);
+            border-radius: var(--radius-lg);
+            padding: 1.1rem 1.25rem;
+            background: #fff;
+            transition: transform .2s, box-shadow .2s, border-color .2s;
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+        }
+
+        .rx-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .09);
+            border-color: var(--color-secondary-200, #99f6e4);
+        }
+
+        .rx-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: .5rem;
+        }
+
+        .rx-card-top h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--color-gray-900);
+        }
+
+        .rx-meta {
+            font-size: .8rem;
+            color: var(--color-gray-500);
+        }
+
+        .rx-details {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: .82rem;
+            color: var(--color-gray-600);
+        }
+
+        .rx-details span strong {
+            color: var(--color-gray-800);
+        }
+
+        .rx-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: .25rem;
+            gap: .5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: .2rem .65rem;
+            border-radius: var(--radius-full);
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            white-space: nowrap;
+        }
+
+        .badge-shared {
+            background: #ccfbf1;
+            color: #0f766e;
+        }
+
+        .badge-dispensed {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-locked {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Buttons */
+        .btn-view {
+            padding: .35rem .85rem;
+            border-radius: var(--radius-md);
+            background: var(--color-secondary-100, #ccfbf1);
+            color: var(--color-secondary-dark, #0f766e);
+            font-size: .8rem;
+            font-weight: 600;
+            border: 1px solid var(--color-secondary-200, #99f6e4);
+            transition: all .15s;
+            text-decoration: none;
+        }
+
+        .btn-view:hover {
+            background: var(--color-secondary);
+            color: #fff;
+        }
+
+        .btn-dispense {
+            padding: .35rem .85rem;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--color-secondary), #0f766e);
+            color: #fff;
+            font-size: .8rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all .2s;
+            box-shadow: 0 2px 8px rgba(13, 148, 136, .25);
+        }
+
+        .btn-dispense:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, .35);
+        }
+
+        /* Empty / loading */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--color-gray-400);
+        }
+
+        .empty-state p {
+            font-size: .95rem;
+            margin: 0;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 2.5rem;
+            color: var(--color-gray-400);
+            font-size: .9rem;
+        }
+    </style>
 </head>
-<body class="pharmacist-dashboard">
-    <nav class="navbar">
-        <div class="navbar-inner" style="display: flex; justify-content: space-between; align-items: center;">
-            <div class="nav-brand">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="9" y1="9" x2="15" y2="9"/>
-                    <line x1="9" y1="15" x2="15" y2="15"/>
-                </svg>
-                MediSure Vault - Pharmacist Portal
-            </div>
-            <div class="nav-links">
-                <a href="{{ url_for('dashboard') }}" class="active">Dashboard</a>
-                <a href="{{ url_for('logout') }}">Logout</a>
-            </div>
+
+<body>
+
+    <nav class="top-bar">
+        <div class="top-bar-brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="9" y1="9" x2="15" y2="9" />
+                <line x1="9" y1="15" x2="15" y2="15" />
+            </svg>
+            MediSure Vault
+        </div>
+        <div class="top-bar-nav">
+            <a href="{{ url_for('pharmacist.dashboard') }}" class="active">Dashboard</a>
+            <a href="{{ url_for('pharmacist.verify_token') }}"
+                style="background:#f0fdfa;color:var(--color-secondary);border:1px solid #99f6e4;" class="btn-history">🔑
+                Verify Token</a>
+            <a href="{{ url_for('pharmacist.history') }}" class="btn-history">📋 History</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
         </div>
     </nav>
 
-    <div class="container">
-        <div class="dashboard-header">
+    <div class="page">
+
+        <!-- Welcome banner -->
+        <div class="welcome-banner">
+
+            <!-- Security Alert Banner -->
+            {% if flagged %}
+            <div
+                style="background:#fef3c7;border:1px solid #fcd34d;border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:.75rem;">
+                <span style="font-size:1.25rem;flex-shrink:0;">⚠️</span>
+                <div>
+                    <p style="margin:0 0 .4rem;font-weight:700;color:#92400e;font-size:.9rem;">{{ flagged|length }}
+                        prescription{{ 's' if flagged|length > 1 }} flagged as suspicious</p>
+                    <ul style="margin:0;padding-left:1.2rem;font-size:.82rem;color:#92400e;">
+                        {% for p in flagged %}
+                        <li>
+                            <a href="{{ url_for('pharmacist.view_prescription', prescription_id=p.id) }}"
+                                style="color:#92400e;font-weight:600;">
+                                #{{ p.id }} {{ p.medication_name }}
+                            </a>
+                            — Score: <strong>{{ p.tamper_score }}/100</strong>
+                            {% if p.is_flagged %}<span
+                                style="background:#fee2e2;color:#991b1b;padding:.1rem .4rem;border-radius:4px;font-size:.72rem;margin-left:.3rem;">FLAGGED</span>{%
+                            endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
             <div>
                 <h1>Welcome, {{ current_user.full_name }}</h1>
-                <p class="subtitle">{{ pharmacist_profile.pharmacy_name }} | {{ pharmacist_profile.location }}</p>
-                <p class="subtitle">License: {{ pharmacist_profile.license_number }}</p>
+                <p>
+                    {% if pharmacist_profile %}
+                    {{ pharmacist_profile.pharmacy_name }} &nbsp;·&nbsp; {{ pharmacist_profile.location }}
+                    {% else %}
+                    Pharmacist Portal
+                    {% endif %}
+                </p>
+            </div>
+            {% if pharmacist_profile %}
+            <span class="badge-license">🪪 {{ pharmacist_profile.license_number }}</span>
+            {% endif %}
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-tile shared">
+                <div class="num">{{ stats.shared }}</div>
+                <div class="lbl">Ready to Dispense</div>
+            </div>
+            <div class="stat-tile today">
+                <div class="num">{{ stats.dispensed_today }}</div>
+                <div class="lbl">Dispensed Today</div>
+            </div>
+            <div class="stat-tile total">
+                <div class="num">{{ stats.dispensed_total }}</div>
+                <div class="lbl">Total Dispensed</div>
+            </div>
+            <div class="stat-tile locked">
+                <div class="num">{{ stats.locked }}</div>
+                <div class="lbl">Locked</div>
             </div>
         </div>
 
-        <!-- Quick Stats -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">⏳</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="pending-count">0</div>
-                    <div class="stat-label">Pending Dispensing</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">✅</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="dispensed-today">0</div>
-                    <div class="stat-label">Dispensed Today</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">📊</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="dispensed-total">0</div>
-                    <div class="stat-label">Total Dispensed</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🔐</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="active-tokens">0</div>
-                    <div class="stat-label">Active Tokens</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Verify Access Token Section -->
+        <!-- Prescriptions ready to dispense -->
         <div class="section-card">
-            <h2>🔑 Verify Access Token</h2>
-            <form id="token-verify-form" class="token-form">
-                <div class="form-row">
-                    <div class="form-group flex-grow">
-                        <label for="access-token">Access Token *</label>
-                        <input type="text" id="access-token" name="token" required 
-                               placeholder="Enter patient's access token">
+            <div class="section-head">
+                <h2>💊 Prescriptions Ready to Dispense</h2>
+                <div class="filter-bar">
+                    <button class="btn-refresh" onclick="loadPrescriptions()">↺ Refresh</button>
+                </div>
+            </div>
+            <div class="section-body">
+                <div id="rxList">
+                    {% if prescriptions %}
+                    <div class="rx-grid">
+                        {% for p in prescriptions %}
+                        <div class="rx-card">
+                            <div class="rx-card-top">
+                                <h3>{{ p.medication_name }}</h3>
+                                <span class="badge badge-{{ p.state.lower() }}">{{ p.state }}</span>
+                            </div>
+                            <div class="rx-meta">
+                                👤 {{ p.patient.full_name if p.patient else '—' }}
+                                &nbsp;·&nbsp;
+                                🩺 Dr. {{ p.doctor.full_name if p.doctor else '—' }}
+                            </div>
+                            <div class="rx-details">
+                                <span><strong>Dosage:</strong> {{ p.dosage }}</span>
+                                <span><strong>Qty:</strong> {{ p.quantity }}</span>
+                            </div>
+                            <div class="rx-footer">
+                                <small style="color:var(--color-gray-400);">ID #{{ p.id }}</small>
+                                <div style="display:flex;gap:.5rem;">
+                                    <a href="{{ url_for('pharmacist.view_prescription', prescription_id=p.id) }}"
+                                        class="btn-view">View</a>
+                                    <button class="btn-dispense"
+                                        onclick="quickDispense({{ p.id }}, '{{ p.medication_name }}')">Dispense
+                                        💊</button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
-                    <div class="form-group">
-                        <label>&nbsp;</label>
-                        <button type="submit" class="btn btn-primary">Verify Token</button>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>✅ No prescriptions waiting to be dispensed.</p>
                     </div>
+                    {% endif %}
                 </div>
-            </form>
-            <div id="token-result" class="token-result" style="display: none;"></div>
-        </div>
-
-        <!-- Pending Prescriptions for Dispensing -->
-        <div class="section-card">
-            <div class="section-header">
-                <h2>⏳ Pending Prescriptions</h2>
-                <button onclick="loadPendingPrescriptions()" class="btn btn-small">🔄 Refresh</button>
-            </div>
-            
-            <div id="pending-prescriptions" class="prescriptions-list">
-                <div class="loading">Loading pending prescriptions...</div>
             </div>
         </div>
 
-        <!-- Dispensing History -->
-        <div class="section-card">
-            <div class="section-header">
-                <h2>📚 Dispensing History</h2>
-                <div class="filter-controls">
-                    <select id="history-filter" class="filter-select">
-                        <option value="today">Today</option>
-                        <option value="week">This Week</option>
-                        <option value="month">This Month</option>
-                        <option value="all">All Time</option>
-                    </select>
-                    <button onclick="loadHistory()" class="btn btn-small">🔄 Refresh</button>
-                </div>
-            </div>
-            
-            <div id="dispensing-history" class="prescriptions-list">
-                <div class="loading">Loading history...</div>
-            </div>
-        </div>
     </div>
 
-    <!-- Dispense Modal -->
-    <div id="dispense-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <h2>Dispense Prescription</h2>
-            <div id="dispense-details"></div>
-            <div class="modal-actions">
-                <button onclick="confirmDispense()" class="btn btn-primary">✅ Confirm Dispense</button>
-                <button onclick="closeDispenseModal()" class="btn btn-secondary">Cancel</button>
-            </div>
-        </div>
+    <div id="flashMessage" style="display:none;position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;min-width:280px;">
     </div>
 
+    <script src="{{ url_for('static', filename='auth.js') }}"></script>
     <script>
-        const API_BASE = '';
-        let currentPrescriptionId = null;
-
-        // Load pharmacist statistics
-        async function loadStats() {
-            try {
-                const response = await fetch(`${API_BASE}/api/pharmacist/stats`);
-                if (!response.ok) throw new Error('Failed to load statistics');
-                
-                const data = await response.json();
-                document.getElementById('pending-count').textContent = data.pending || 0;
-                document.getElementById('dispensed-today').textContent = data.dispensed_today || 0;
-                document.getElementById('dispensed-total').textContent = data.dispensed_total || 0;
-                document.getElementById('active-tokens').textContent = data.active_tokens || 0;
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
+        // Quick dispense — redirect to token verification page
+        function quickDispense(id, name) {
+            window.location.href = '/pharmacist/verify-token';
         }
 
-        // Verify access token
-        document.getElementById('token-verify-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const token = document.getElementById('access-token').value;
-            const resultDiv = document.getElementById('token-result');
-            
+        // Dynamic refresh via API
+        async function loadPrescriptions() {
+            const list = document.getElementById('rxList');
+            list.innerHTML = '<div class="loading-state">Loading…</div>';
             try {
-                const response = await fetch(`${API_BASE}/api/access/verify`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.valid) {
-                    resultDiv.className = 'token-result success';
-                    resultDiv.innerHTML = `
-                        <h3>✅ Token Valid</h3>
-                        <p><strong>Patient:</strong> ${data.patient_name}</p>
-                        <p><strong>Prescription ID:</strong> ${data.prescription_id}</p>
-                        <p><strong>Medication:</strong> ${data.medication_name}</p>
-                        <p><strong>Expires:</strong> ${new Date(data.expires_at).toLocaleString()}</p>
-                    `;
-                    resultDiv.style.display = 'block';
-                } else {
-                    resultDiv.className = 'token-result error';
-                    resultDiv.innerHTML = `<h3>❌ Invalid or Expired Token</h3><p>${data.message || 'Token verification failed'}</p>`;
-                    resultDiv.style.display = 'block';
-                }
-            } catch (error) {
-                console.error('Error verifying token:', error);
-                resultDiv.className = 'token-result error';
-                resultDiv.innerHTML = '<h3>❌ Verification Failed</h3><p>Unable to verify token</p>';
-                resultDiv.style.display = 'block';
-            }
-        });
-
-        // Load pending prescriptions
-        async function loadPendingPrescriptions() {
-            const listDiv = document.getElementById('pending-prescriptions');
-            listDiv.innerHTML = '<div class="loading">Loading pending prescriptions...</div>';
-
-            try {
-                const response = await fetch(`${API_BASE}/api/pharmacist/pending`);
-                if (!response.ok) throw new Error('Failed to load prescriptions');
-                
-                const prescriptions = await response.json();
-                
-                if (prescriptions.length === 0) {
-                    listDiv.innerHTML = '<div class="empty-state">No pending prescriptions</div>';
+                const res = await fetch('/pharmacist/api/prescriptions?state=SHARED', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.length) {
+                    list.innerHTML = '<div class="empty-state"><p>✅ No prescriptions waiting to be dispensed.</p></div>';
                     return;
                 }
-
-                listDiv.innerHTML = prescriptions.map(p => `
-                    <div class="prescription-card">
-                        <div class="prescription-header">
-                            <div>
-                                <h3>${p.medication_name}</h3>
-                                <p class="prescription-meta">Patient: ${p.patient_name} | Doctor: Dr. ${p.doctor_name}</p>
-                            </div>
-                            <span class="badge badge-pending">PENDING</span>
-                        </div>
-                        <div class="prescription-details">
-                            <div class="detail-item"><strong>Dosage:</strong> ${p.dosage}</div>
-                            <div class="detail-item"><strong>Quantity:</strong> ${p.quantity}</div>
-                            <div class="detail-item"><strong>Created:</strong> ${new Date(p.created_at).toLocaleDateString()}</div>
-                            <div class="detail-item"><strong>Prescription ID:</strong> ${p.id}</div>
-                        </div>
-                        ${p.instructions ? `<div class="prescription-instructions">${p.instructions}</div>` : ''}
-                        <div class="prescription-actions">
-                            <button onclick="openDispenseModal(${p.id})" class="btn btn-primary">💊 Dispense</button>
+                list.innerHTML = `<div class="rx-grid">${data.map(p => `
+                <div class="rx-card">
+                    <div class="rx-card-top">
+                        <h3>${p.medication_name}</h3>
+                        <span class="badge badge-${p.state.toLowerCase()}">${p.state}</span>
+                    </div>
+                    <div class="rx-meta">👤 ${p.patient_name} &nbsp;·&nbsp; 🩺 Dr. ${p.doctor_name}</div>
+                    <div class="rx-details">
+                        <span><strong>Dosage:</strong> ${p.dosage}</span>
+                        <span><strong>Qty:</strong> ${p.quantity}</span>
+                    </div>
+                    <div class="rx-footer">
+                        <small style="color:var(--color-gray-400);">ID #${p.id}</small>
+                        <div style="display:flex;gap:.5rem;">
+                            <a href="/pharmacist/prescription/${p.id}" class="btn-view">View</a>
+                            <button class="btn-dispense" onclick="quickDispense(${p.id}, '${p.medication_name}')">Dispense 💊</button>
                         </div>
                     </div>
-                `).join('');
-            } catch (error) {
-                console.error('Error loading prescriptions:', error);
-                listDiv.innerHTML = '<div class="error">Failed to load prescriptions</div>';
+                </div>`).join('')}</div>`;
+            } catch {
+                list.innerHTML = '<div class="empty-state"><p>Failed to load. Please refresh.</p></div>';
             }
         }
-
-        // Load dispensing history
-        async function loadHistory() {
-            const filter = document.getElementById('history-filter').value;
-            const listDiv = document.getElementById('dispensing-history');
-            listDiv.innerHTML = '<div class="loading">Loading history...</div>';
-
-            try {
-                const response = await fetch(`${API_BASE}/api/pharmacist/history?filter=${filter}`);
-                if (!response.ok) throw new Error('Failed to load history');
-                
-                const prescriptions = await response.json();
-                
-                if (prescriptions.length === 0) {
-                    listDiv.innerHTML = '<div class="empty-state">No dispensing history</div>';
-                    return;
-                }
-
-                listDiv.innerHTML = prescriptions.map(p => `
-                    <div class="prescription-card">
-                        <div class="prescription-header">
-                            <div>
-                                <h3>${p.medication_name}</h3>
-                                <p class="prescription-meta">Patient: ${p.patient_name} | Doctor: Dr. ${p.doctor_name}</p>
-                            </div>
-                            <span class="badge badge-${p.state.toLowerCase()}">${p.state}</span>
-                        </div>
-                        <div class="prescription-details">
-                            <div class="detail-item"><strong>Dosage:</strong> ${p.dosage}</div>
-                            <div class="detail-item"><strong>Quantity:</strong> ${p.quantity}</div>
-                            <div class="detail-item"><strong>Dispensed:</strong> ${new Date(p.dispensed_at).toLocaleString()}</div>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                console.error('Error loading history:', error);
-                listDiv.innerHTML = '<div class="error">Failed to load history</div>';
-            }
-        }
-
-        // Open dispense modal
-        async function openDispenseModal(prescriptionId) {
-            currentPrescriptionId = prescriptionId;
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/prescriptions/${prescriptionId}`);
-                const prescription = await response.json();
-                
-                document.getElementById('dispense-details').innerHTML = `
-                    <div class="prescription-summary">
-                        <p><strong>Medication:</strong> ${prescription.medication_name}</p>
-                        <p><strong>Patient:</strong> ${prescription.patient_name}</p>
-                        <p><strong>Dosage:</strong> ${prescription.dosage}</p>
-                        <p><strong>Quantity:</strong> ${prescription.quantity}</p>
-                        <p><strong>Doctor:</strong> Dr. ${prescription.doctor_name}</p>
-                    </div>
-                `;
-                
-                document.getElementById('dispense-modal').style.display = 'flex';
-            } catch (error) {
-                console.error('Error loading prescription:', error);
-                alert('Failed to load prescription details');
-            }
-        }
-
-        // Confirm dispense
-        async function confirmDispense() {
-            if (!currentPrescriptionId) return;
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/pharmacist/dispense/${currentPrescriptionId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    alert('✅ Prescription dispensed successfully! It is now locked.');
-                    closeDispenseModal();
-                    await loadStats();
-                    await loadPendingPrescriptions();
-                    await loadHistory();
-                } else {
-                    alert(`❌ Error: ${result.error || 'Failed to dispense'}`);
-                }
-            } catch (error) {
-                console.error('Error dispensing:', error);
-                alert('❌ Failed to dispense prescription');
-            }
-        }
-
-        // Close dispense modal
-        function closeDispenseModal() {
-            document.getElementById('dispense-modal').style.display = 'none';
-            currentPrescriptionId = null;
-        }
-
-        // History filter change
-        document.getElementById('history-filter').addEventListener('change', loadHistory);
-
-        // Initial load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadStats();
-            loadPendingPrescriptions();
-            loadHistory();
-        });
-
-        // Auto-refresh every 30 seconds
-        setInterval(() => {
-            loadStats();
-            loadPendingPrescriptions();
-        }, 30000);
     </script>
 </body>
+
 </html>

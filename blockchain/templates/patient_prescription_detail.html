@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescription #{{ prescription.id }} - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f9fafb 0%, #f0f4f8 100%);
+        }
+
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, .95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--color-gray-200);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 64px;
+        }
+
+        .top-bar-brand {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #8b5cf6;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .top-bar-nav {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .top-bar-nav a {
+            padding: .45rem .9rem;
+            border-radius: var(--radius-lg);
+            font-size: .875rem;
+            font-weight: 500;
+            color: var(--color-gray-600);
+            transition: all .15s;
+        }
+
+        .top-bar-nav a:hover {
+            background: #f3e8ff;
+            color: #8b5cf6;
+        }
+
+        .top-bar-nav a.btn-logout {
+            color: var(--color-danger);
+        }
+
+        .top-bar-nav a.btn-logout:hover {
+            background: var(--color-danger-light);
+        }
+
+        .page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-size: .85rem;
+            color: var(--color-gray-500);
+            margin-bottom: 1.5rem;
+        }
+
+        .breadcrumb a {
+            color: #8b5cf6;
+            font-weight: 500;
+        }
+
+        /* Title row */
+        .page-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: .75rem;
+        }
+
+        .page-title-row h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--color-gray-900);
+        }
+
+        /* State badge */
+        .state-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .3rem .85rem;
+            border-radius: var(--radius-full);
+            font-size: .8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .state-CREATED {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .state-SHARED {
+            background: #ccfbf1;
+            color: #0f766e;
+        }
+
+        .state-DISPENSED {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .state-LOCKED {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .state-CANCELLED {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        /* Cards */
+        .detail-card {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-200);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+        }
+
+        .detail-card-header {
+            padding: .9rem 1.5rem;
+            border-bottom: 1px solid var(--color-gray-100);
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .detail-card-header h2 {
+            font-size: .95rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--color-gray-700);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .detail-card-body {
+            padding: 1.25rem 1.5rem;
+        }
+
+        .detail-row {
+            display: flex;
+            gap: 1rem;
+            padding: .55rem 0;
+            border-bottom: 1px solid var(--color-gray-50);
+            flex-wrap: wrap;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--color-gray-500);
+            min-width: 150px;
+            flex-shrink: 0;
+        }
+
+        .detail-value {
+            font-size: .9rem;
+            color: var(--color-gray-900);
+            flex: 1;
+        }
+
+        /* Token generation card */
+        .token-action-card {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            border: 2px solid #ddd6fe;
+            box-shadow: 0 2px 10px rgba(139, 92, 246, .08);
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .token-action-card h2 {
+            font-size: .95rem;
+            font-weight: 700;
+            margin: 0 0 .5rem;
+            color: var(--color-gray-700);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .token-action-card p {
+            font-size: .875rem;
+            color: var(--color-gray-600);
+            margin-bottom: 1.25rem;
+        }
+
+        .token-options {
+            display: flex;
+            gap: .75rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .token-options label {
+            font-size: .85rem;
+            font-weight: 600;
+            color: var(--color-gray-700);
+        }
+
+        .token-options select {
+            padding: .4rem .75rem;
+            border: 1.5px solid #ddd6fe;
+            border-radius: var(--radius-md);
+            font-size: .875rem;
+            color: var(--color-gray-800);
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .token-options select:focus {
+            outline: none;
+            border-color: #8b5cf6;
+        }
+
+        .btn-gen-token {
+            padding: .65rem 1.5rem;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: #fff;
+            font-size: .9rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all .2s;
+            box-shadow: 0 4px 14px rgba(139, 92, 246, .3);
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .btn-gen-token:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(139, 92, 246, .4);
+        }
+
+        .btn-gen-token:disabled {
+            opacity: .6;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        /* Token result box */
+        .token-result {
+            background: #f3e8ff;
+            border: 1px solid #ddd6fe;
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.25rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .token-result .token-string {
+            font-family: monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #7c3aed;
+            word-break: break-all;
+            letter-spacing: .05em;
+            display: block;
+            margin-bottom: .5rem;
+        }
+
+        .token-result .token-meta {
+            font-size: .8rem;
+            color: #6d28d9;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-copy {
+            padding: .3rem .75rem;
+            border-radius: var(--radius-md);
+            background: #8b5cf6;
+            color: #fff;
+            font-size: .78rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .btn-copy:hover {
+            background: #7c3aed;
+        }
+
+        /* Tokens table */
+        .tokens-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .tokens-table th {
+            padding: .6rem 1rem;
+            text-align: left;
+            font-size: .75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--color-gray-500);
+            border-bottom: 1px solid var(--color-gray-200);
+        }
+
+        .tokens-table td {
+            padding: .75rem 1rem;
+            font-size: .85rem;
+            color: var(--color-gray-800);
+            border-bottom: 1px solid var(--color-gray-100);
+        }
+
+        .tokens-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .tokens-table tr:hover td {
+            background: var(--color-gray-50);
+        }
+
+        /* Token status badges */
+        .token-badge {
+            display: inline-block;
+            padding: .15rem .55rem;
+            border-radius: var(--radius-full);
+            font-size: .7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .token-badge.valid {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+
+        .token-badge.used {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .token-badge.expired {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .token-badge.revoked {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Revoke button */
+        .btn-revoke {
+            padding: .25rem .65rem;
+            border-radius: var(--radius-md);
+            background: var(--color-danger-light);
+            color: #991b1b;
+            font-size: .75rem;
+            font-weight: 600;
+            border: 1px solid #fca5a5;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .btn-revoke:hover {
+            background: #fecaca;
+        }
+
+        /* Countdown */
+        .countdown {
+            font-size: .75rem;
+            color: #7c3aed;
+            font-weight: 600;
+        }
+
+        .empty-tokens {
+            text-align: center;
+            padding: 2rem;
+            color: var(--color-gray-400);
+            font-size: .875rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="top-bar">
+        <div class="top-bar-brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+            </svg>
+            MediSure Vault
+        </div>
+        <div class="top-bar-nav">
+            <a href="{{ url_for('patient.dashboard') }}">← Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+        </div>
+    </nav>
+
+    <div class="page">
+
+        <div class="breadcrumb">
+            <a href="{{ url_for('patient.dashboard') }}">Dashboard</a>
+            <span>›</span>
+            <span>Prescription #{{ prescription.id }}</span>
+        </div>
+
+        <div class="page-title-row">
+            <h1>{{ prescription.medication_name }}</h1>
+            <span class="state-badge state-{{ prescription.state }}">
+                {% if prescription.state == 'SHARED' %}🔗
+                {% elif prescription.state == 'LOCKED' %}🔒
+                {% elif prescription.state == 'DISPENSED' %}✅
+                {% elif prescription.state == 'CREATED' %}📝
+                {% else %}❌{% endif %}
+                {{ prescription.state }}
+            </span>
+        </div>
+
+        <!-- Flash -->
+        <div id="flashMessage" style="display:none;margin-bottom:1rem;"></div>
+
+        <!-- Prescription Details -->
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h2>Prescription Details</h2>
+            </div>
+            <div class="detail-card-body">
+                <div class="detail-row">
+                    <span class="detail-label">Prescribing Doctor</span>
+                    <span class="detail-value">Dr. {{ prescription.doctor.full_name if prescription.doctor else '—'
+                        }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Medication</span>
+                    <span class="detail-value" style="font-weight:600;">{{ prescription.medication_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Dosage</span>
+                    <span class="detail-value">{{ prescription.dosage }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Quantity</span>
+                    <span class="detail-value">{{ prescription.quantity }} units</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Refills Allowed</span>
+                    <span class="detail-value">{{ prescription.refills_allowed }}</span>
+                </div>
+                {% if prescription.diagnosis %}
+                <div class="detail-row">
+                    <span class="detail-label">Diagnosis</span>
+                    <span class="detail-value">{{ prescription.diagnosis }}</span>
+                </div>
+                {% endif %}
+                {% if prescription.instructions %}
+                <div class="detail-row">
+                    <span class="detail-label">Instructions</span>
+                    <span class="detail-value">{{ prescription.instructions }}</span>
+                </div>
+                {% endif %}
+                <div class="detail-row">
+                    <span class="detail-label">Prescribed On</span>
+                    <span class="detail-value">{{ prescription.created_at.strftime('%d %b %Y, %H:%M') if
+                        prescription.created_at else '—' }}</span>
+                </div>
+                {% if prescription.dispensed_at %}
+                <div class="detail-row">
+                    <span class="detail-label">Dispensed On</span>
+                    <span class="detail-value">{{ prescription.dispensed_at.strftime('%d %b %Y, %H:%M') }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Token Generation (only if SHARED and not locked) -->
+        {% if prescription.state == 'SHARED' and not prescription.is_locked() %}
+        <div class="token-action-card">
+            <h2>🔑 Generate Access Token</h2>
+            <p>
+                Generate a <strong>one-time token</strong> to share this prescription with a pharmacist.
+                The token expires automatically and can only be used once.
+            </p>
+            <div class="token-options">
+                <label for="validitySelect">Valid for:</label>
+                <select id="validitySelect">
+                    <option value="10">10 minutes</option>
+                    <option value="15" selected>15 minutes</option>
+                    <option value="30">30 minutes</option>
+                    <option value="60">60 minutes</option>
+                </select>
+            </div>
+            <button id="genTokenBtn" class="btn-gen-token" onclick="generateToken()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                        d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                </svg>
+                Generate Token
+            </button>
+
+            <!-- Token result (shown after generation) -->
+            <div id="tokenResult" class="token-result">
+                <span id="tokenString" class="token-string"></span>
+                <div class="token-meta">
+                    <span>⏱ Expires: <strong id="tokenExpiry"></strong></span>
+                    <span>🔂 One-time use only</span>
+                </div>
+                <div style="margin-top:.75rem;display:flex;gap:.5rem;">
+                    <button class="btn-copy" onclick="copyToken()">📋 Copy Token</button>
+                </div>
+            </div>
+        </div>
+        {% elif prescription.is_locked() %}
+        <div
+            style="background:#fee2e2;border:1px solid #fca5a5;border-radius:var(--radius-lg);padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991b1b" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <p style="margin:0;color:#991b1b;font-weight:600;font-size:.9rem;">This prescription is locked. It has been
+                dispensed and no new tokens can be generated.</p>
+        </div>
+        {% elif prescription.state == 'CREATED' %}
+        <div
+            style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;">
+            <p style="margin:0;color:#1e40af;font-size:.875rem;">⏳ Your doctor hasn't shared this prescription yet.
+                You'll be able to generate a token once it's shared.</p>
+        </div>
+        {% endif %}
+
+        <!-- Tokens List -->
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                        d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                </svg>
+                <h2>Access Tokens
+                    {% if active_count > 0 %}
+                    <span
+                        style="background:#f3e8ff;color:#7c3aed;font-size:.75rem;padding:.15rem .55rem;border-radius:var(--radius-full);margin-left:.5rem;">{{
+                        active_count }} active</span>
+                    {% endif %}
+                </h2>
+            </div>
+            <div class="detail-card-body" id="tokensBody">
+                {% if tokens %}
+                <table class="tokens-table">
+                    <thead>
+                        <tr>
+                            <th>Token</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Expires</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in tokens %}
+                        {% set now = namespace(val=none) %}
+                        <tr>
+                            <td>
+                                <code style="font-size:.8rem;color:#7c3aed;">{{ t.token[:16] }}…</code>
+                            </td>
+                            <td>
+                                {% if t.is_used %}
+                                <span class="token-badge used">Used</span>
+                                {% elif t.is_revoked %}
+                                <span class="token-badge revoked">Revoked</span>
+                                {% elif t.expires_at < now_dt %} <span class="token-badge expired">Expired</span>
+                                    {% else %}
+                                    <span class="token-badge valid">Active</span>
+                                    {% endif %}
+                            </td>
+                            <td>{{ t.created_at.strftime('%d %b, %H:%M') if t.created_at else '—' }}</td>
+                            <td>
+                                {% if not t.is_used and not t.is_revoked and t.expires_at %}
+                                <span class="countdown" data-expires="{{ t.expires_at.isoformat() }}">
+                                    {{ t.expires_at.strftime('%H:%M') }}
+                                </span>
+                                {% else %}
+                                {{ t.expires_at.strftime('%H:%M') if t.expires_at else '—' }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not t.is_used and not t.is_revoked %}
+                                <button class="btn-revoke" onclick="revokeToken({{ t.id }})">Revoke</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-tokens">No tokens generated yet for this prescription.</div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='auth.js') }}"></script>
+    <script>
+        // Pass server-side now to Jinja (workaround: use JS Date for comparisons)
+        let _generatedToken = '';
+
+        async function generateToken() {
+            const validity = parseInt(document.getElementById('validitySelect').value);
+            const btn = document.getElementById('genTokenBtn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Generating…';
+
+            try {
+                const res = await fetch("{{ url_for('patient.generate_token', prescription_id=prescription.id) }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ validity_minutes: validity })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    _generatedToken = data.token;
+                    document.getElementById('tokenString').textContent = data.token;
+                    const exp = new Date(data.expires_at);
+                    document.getElementById('tokenExpiry').textContent =
+                        exp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    document.getElementById('tokenResult').style.display = 'block';
+                    flashMessage('Token generated successfully!', 'success');
+                    // Reload token list after short delay
+                    setTimeout(() => location.reload(), 3000);
+                } else {
+                    flashMessage(data.error || 'Could not generate token.', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '🔑 Generate Token';
+                }
+            } catch {
+                flashMessage('Network error. Please try again.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '🔑 Generate Token';
+            }
+        }
+
+        function copyToken() {
+            navigator.clipboard.writeText(_generatedToken).then(() => {
+                flashMessage('Token copied to clipboard!', 'success');
+            });
+        }
+
+        async function revokeToken(tokenId) {
+            if (!confirm('Revoke this token? The pharmacist will no longer be able to use it.')) return;
+
+            try {
+                const res = await fetch(`/patient/revoke-token/${tokenId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    flashMessage('Token revoked.', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    flashMessage(data.error || 'Could not revoke token.', 'error');
+                }
+            } catch {
+                flashMessage('Network error. Please try again.', 'error');
+            }
+        }
+
+        // Live countdown for active tokens
+        function updateCountdowns() {
+            document.querySelectorAll('.countdown[data-expires]').forEach(el => {
+                const exp = new Date(el.dataset.expires);
+                const diff = Math.max(0, Math.floor((exp - new Date()) / 1000));
+                if (diff === 0) {
+                    el.textContent = 'Expired';
+                    el.style.color = 'var(--color-gray-400)';
+                } else {
+                    const m = Math.floor(diff / 60);
+                    const s = diff % 60;
+                    el.textContent = `${m}m ${s.toString().padStart(2, '0')}s`;
+                }
+            });
+        }
+        setInterval(updateCountdowns, 1000);
+        updateCountdowns();
+    </script>
+</body>
+
+</html>

@@ -1,37 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Login - MediSure Vault</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
                 <div class="auth-logo" style="background: #f3e8ff;">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 6v6l4 2"/>
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 6v6l4 2" />
                     </svg>
                 </div>
                 <h1 class="auth-title">Patient Login</h1>
                 <p class="auth-subtitle">Access your medical records and prescriptions</p>
             </div>
-            
-            <div id="messageBox" class="alert alert-danger" style="display: none;"></div>
-            
-            <form id="patientLoginForm">
+
+            <!-- Flash message banner -->
+            <div id="flashMessage" style="display:none;"></div>
+
+            <form id="patientLoginForm" novalidate>
                 <div class="form-group">
                     <label for="username" class="form-label">Username</label>
-                    <input type="text" id="username" name="username" class="form-input" required placeholder="Enter your username">
+                    <input type="text" id="username" name="username" class="form-input"
+                        placeholder="Enter your username" autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" name="password" class="form-input" required placeholder="Enter your password">
+                    <input type="password" id="password" name="password" class="form-input"
+                        placeholder="Enter your password" autocomplete="current-password">
                 </div>
-                <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
+                <button type="submit" id="submitBtn" class="btn btn-primary btn-block btn-lg">Sign In</button>
             </form>
 
             <div class="auth-footer">
@@ -41,32 +46,45 @@
         </div>
     </div>
 
+    <script src="{{ url_for('static', filename='auth.js') }}"></script>
     <script>
-        // Show message helper
-        function showMessage(message, type = 'info') {
-            const messageBox = document.getElementById('messageBox');
-            messageBox.textContent = message;
-            messageBox.className = `message-box ${type}`;
-            messageBox.classList.remove('hidden');
-            
-            setTimeout(() => {
-                messageBox.classList.add('hidden');
-            }, 5000);
-        }
+        const form = document.getElementById('patientLoginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const submitBtn = document.getElementById('submitBtn');
 
-        // Handle patient login
-        document.getElementById('patientLoginForm').addEventListener('submit', async (e) => {
+        // Real-time validation on blur
+        usernameInput.addEventListener('blur', () => {
+            const err = validateUsername(usernameInput.value.trim());
+            err ? setFieldError(usernameInput, err) : clearFieldError(usernameInput);
+        });
+        usernameInput.addEventListener('input', () => clearFieldError(usernameInput));
+
+        passwordInput.addEventListener('blur', () => {
+            if (!passwordInput.value) setFieldError(passwordInput, 'Password is required');
+            else clearFieldError(passwordInput);
+        });
+        passwordInput.addEventListener('input', () => clearFieldError(passwordInput));
+
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+
+            // Client-side validation
+            let valid = true;
+            const uErr = validateUsername(username);
+            if (uErr) { setFieldError(usernameInput, uErr); valid = false; }
+            if (!password) { setFieldError(passwordInput, 'Password is required'); valid = false; }
+            if (!valid) return;
+
+            setLoading(submitBtn, true, 'Sign In');
 
             try {
                 const response = await fetch('/auth/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
                     body: JSON.stringify({ username, password })
                 });
@@ -74,22 +92,24 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Check if user is a patient
                     if (data.user.role === 'PATIENT') {
-                        showMessage('Login successful! Redirecting...', 'success');
-                        setTimeout(() => {
-                            window.location.href = '/dashboard';
-                        }, 1000);
+                        flashMessage('Login successful! Redirecting...', 'success');
+                        setTimeout(() => { window.location.href = '/dashboard'; }, 1200);
                     } else {
-                        showMessage('Access denied. This portal is for patients only.', 'error');
+                        await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+                        flashMessage('Access denied. This portal is for patients only.', 'error');
+                        setLoading(submitBtn, false, 'Sign In');
                     }
                 } else {
-                    showMessage(data.error || 'Login failed', 'error');
+                    flashMessage(data.error || 'Invalid credentials. Please try again.', 'error');
+                    setLoading(submitBtn, false, 'Sign In');
                 }
-            } catch (error) {
-                showMessage('Network error. Please try again.', 'error');
+            } catch {
+                flashMessage('Network error. Please check your connection.', 'error');
+                setLoading(submitBtn, false, 'Sign In');
             }
         });
     </script>
 </body>
+
 </html>

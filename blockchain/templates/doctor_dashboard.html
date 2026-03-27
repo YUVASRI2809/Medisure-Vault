@@ -1,266 +1,601 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Dashboard - MediSure Vault</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f9fafb 0%, #f0f4f8 100%);
+        }
+
+        /* ── Top Nav ── */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--color-gray-200);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 64px;
+        }
+
+        .top-bar-brand {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .top-bar-nav {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .top-bar-nav a {
+            padding: .45rem .9rem;
+            border-radius: var(--radius-lg);
+            font-size: .875rem;
+            font-weight: 500;
+            color: var(--color-gray-600);
+            transition: all .15s;
+        }
+
+        .top-bar-nav a:hover {
+            background: var(--color-primary-50);
+            color: var(--color-primary);
+        }
+
+        .top-bar-nav a.active {
+            background: var(--color-primary);
+            color: #fff;
+        }
+
+        .top-bar-nav a.btn-new {
+            background: var(--color-primary);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .top-bar-nav a.btn-new:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30, 111, 217, .3);
+        }
+
+        .top-bar-nav a.btn-logout {
+            color: var(--color-danger);
+        }
+
+        .top-bar-nav a.btn-logout:hover {
+            background: var(--color-danger-light);
+        }
+
+        /* ── Page ── */
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* ── Welcome Banner ── */
+        .welcome-banner {
+            background: linear-gradient(135deg, var(--color-primary) 0%, #1557b0 100%);
+            border-radius: var(--radius-xl);
+            padding: 1.75rem 2rem;
+            color: #fff;
+            margin-bottom: 1.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 8px 24px rgba(30, 111, 217, .25);
+        }
+
+        .welcome-banner h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 0 0 .25rem;
+            color: #fff;
+        }
+
+        .welcome-banner p {
+            margin: 0;
+            opacity: .85;
+            font-size: .9rem;
+        }
+
+        .welcome-banner .badge-license {
+            background: rgba(255, 255, 255, .15);
+            border: 1px solid rgba(255, 255, 255, .3);
+            padding: .35rem .85rem;
+            border-radius: var(--radius-full);
+            font-size: .8rem;
+            font-weight: 600;
+        }
+
+        /* ── Stats ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .stat-tile {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            padding: 1.25rem 1.5rem;
+            border: 1px solid var(--color-gray-200);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+            transition: transform .2s, box-shadow .2s;
+            cursor: default;
+        }
+
+        .stat-tile:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .09);
+        }
+
+        .stat-tile .num {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: .3rem;
+        }
+
+        .stat-tile .lbl {
+            font-size: .78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--color-gray-500);
+        }
+
+        .stat-tile.total .num {
+            color: var(--color-primary);
+        }
+
+        .stat-tile.created .num {
+            color: #0369a1;
+        }
+
+        .stat-tile.dispensed .num {
+            color: var(--color-warning-dark);
+        }
+
+        .stat-tile.locked .num {
+            color: var(--color-danger-dark);
+        }
+
+        /* ── Section Card ── */
+        .section-card {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-200);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.1rem 1.5rem;
+            border-bottom: 1px solid var(--color-gray-100);
+            flex-wrap: wrap;
+            gap: .75rem;
+        }
+
+        .section-head h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--color-gray-800);
+        }
+
+        .section-body {
+            padding: 1.25rem 1.5rem;
+        }
+
+        /* ── Filter bar ── */
+        .filter-bar {
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar select {
+            padding: .4rem .75rem;
+            border: 1px solid var(--color-gray-300);
+            border-radius: var(--radius-md);
+            font-size: .85rem;
+            color: var(--color-gray-700);
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .filter-bar select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .btn-refresh {
+            padding: .4rem .85rem;
+            border: 1px solid var(--color-gray-300);
+            border-radius: var(--radius-md);
+            background: #fff;
+            font-size: .85rem;
+            cursor: pointer;
+            color: var(--color-gray-600);
+            transition: all .15s;
+        }
+
+        .btn-refresh:hover {
+            background: var(--color-gray-50);
+            border-color: var(--color-gray-400);
+        }
+
+        /* ── Prescription Cards ── */
+        .rx-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+
+        .rx-card {
+            border: 1px solid var(--color-gray-200);
+            border-radius: var(--radius-lg);
+            padding: 1.1rem 1.25rem;
+            background: #fff;
+            transition: transform .2s, box-shadow .2s, border-color .2s;
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+        }
+
+        .rx-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .09);
+            border-color: var(--color-primary-200);
+        }
+
+        .rx-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: .5rem;
+        }
+
+        .rx-card-top h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--color-gray-900);
+        }
+
+        .rx-meta {
+            font-size: .8rem;
+            color: var(--color-gray-500);
+        }
+
+        .rx-details {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: .82rem;
+            color: var(--color-gray-600);
+        }
+
+        .rx-details span strong {
+            color: var(--color-gray-800);
+        }
+
+        .rx-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: .25rem;
+        }
+
+        .rx-footer small {
+            font-size: .75rem;
+            color: var(--color-gray-400);
+        }
+
+        /* ── State Badges ── */
+        .badge {
+            display: inline-block;
+            padding: .2rem .65rem;
+            border-radius: var(--radius-full);
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            white-space: nowrap;
+        }
+
+        .badge-created {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .badge-shared {
+            background: #ede9fe;
+            color: #6d28d9;
+        }
+
+        .badge-dispensed {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-locked {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-cancelled {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        /* ── View button ── */
+        .btn-view {
+            padding: .35rem .85rem;
+            border-radius: var(--radius-md);
+            background: var(--color-primary-50);
+            color: var(--color-primary);
+            font-size: .8rem;
+            font-weight: 600;
+            border: 1px solid var(--color-primary-200);
+            transition: all .15s;
+            text-decoration: none;
+        }
+
+        .btn-view:hover {
+            background: var(--color-primary);
+            color: #fff;
+        }
+
+        /* ── Empty / Loading ── */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--color-gray-400);
+        }
+
+        .empty-state svg {
+            margin-bottom: .75rem;
+            opacity: .4;
+        }
+
+        .empty-state p {
+            font-size: .95rem;
+            margin: 0 0 1rem;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 2.5rem;
+            color: var(--color-gray-400);
+            font-size: .9rem;
+        }
+    </style>
 </head>
-<body class="doctor-dashboard">
-    <nav class="navbar">
-        <div class="navbar-inner" style="display: flex; justify-content: space-between; align-items: center;">
-            <div class="nav-brand">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                    <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
-                </svg>
-                MediSure Vault - Doctor Portal
-            </div>
-            <div class="nav-links">
-                <a href="{{ url_for('dashboard') }}" class="active">Dashboard</a>
-                <a href="{{ url_for('logout') }}">Logout</a>
-            </div>
+
+<body>
+
+    <!-- ── Top Navigation ── -->
+    <nav class="top-bar">
+        <div class="top-bar-brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            MediSure Vault
+        </div>
+        <div class="top-bar-nav">
+            <a href="{{ url_for('doctor.dashboard') }}" class="active">Dashboard</a>
+            <a href="{{ url_for('doctor.create_form') }}" class="btn-new">+ New Prescription</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
         </div>
     </nav>
 
-    <div class="container">
-        <div class="dashboard-header">
+    <div class="page">
+
+        <!-- ── Welcome Banner ── -->
+        <div class="welcome-banner">
+
+            <!-- ── Security Alert Banner ── -->
+            {% if flagged %}
+            <div
+                style="background:#fef3c7;border:1px solid #fcd34d;border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:.75rem;">
+                <span style="font-size:1.25rem;flex-shrink:0;">⚠️</span>
+                <div>
+                    <p style="margin:0 0 .4rem;font-weight:700;color:#92400e;font-size:.9rem;">Security Alert — {{
+                        flagged|length }} prescription{{ 's' if flagged|length > 1 }} flagged</p>
+                    <ul style="margin:0;padding-left:1.2rem;font-size:.82rem;color:#92400e;">
+                        {% for p in flagged %}
+                        <li>
+                            <a href="{{ url_for('doctor.view_prescription', prescription_id=p.id) }}"
+                                style="color:#92400e;font-weight:600;">
+                                #{{ p.id }} {{ p.medication_name }}
+                            </a>
+                            — Tamper Score: <strong>{{ p.tamper_score }}/100</strong>
+                            {% if p.is_flagged %}<span
+                                style="background:#fee2e2;color:#991b1b;padding:.1rem .4rem;border-radius:4px;font-size:.72rem;margin-left:.3rem;">FLAGGED</span>{%
+                            endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
             <div>
                 <h1>Welcome, Dr. {{ current_user.full_name }}</h1>
-                <p class="subtitle">Specialization: {{ doctor_profile.specialization }} | Hospital: {{ doctor_profile.hospital }}</p>
-                <p class="subtitle">License: {{ doctor_profile.license_number }}</p>
+                <p>
+                    {% if doctor_profile %}
+                    {{ doctor_profile.specialization }} &nbsp;·&nbsp; {{ doctor_profile.hospital }}
+                    {% else %}
+                    Doctor Portal
+                    {% endif %}
+                </p>
+            </div>
+            {% if doctor_profile %}
+            <span class="badge-license">🪪 {{ doctor_profile.license_number }}</span>
+            {% endif %}
+        </div>
+
+        <!-- ── Stats Row ── -->
+        <div class="stats-row">
+            <div class="stat-tile total">
+                <div class="num">{{ stats.total }}</div>
+                <div class="lbl">Total</div>
+            </div>
+            <div class="stat-tile created">
+                <div class="num">{{ stats.created }}</div>
+                <div class="lbl">Created</div>
+            </div>
+            <div class="stat-tile" style="--c:#6d28d9;">
+                <div class="num" style="color:#6d28d9;">{{ stats.shared }}</div>
+                <div class="lbl">Shared</div>
+            </div>
+            <div class="stat-tile dispensed">
+                <div class="num">{{ stats.dispensed }}</div>
+                <div class="lbl">Dispensed</div>
+            </div>
+            <div class="stat-tile locked">
+                <div class="num">{{ stats.locked }}</div>
+                <div class="lbl">Locked</div>
             </div>
         </div>
 
-        <!-- Quick Stats -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">📝</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="total-prescriptions">0</div>
-                    <div class="stat-label">Total Prescriptions</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">⏳</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="pending-prescriptions">0</div>
-                    <div class="stat-label">Pending Dispensing</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">✅</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="dispensed-prescriptions">0</div>
-                    <div class="stat-label">Dispensed</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🔒</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="locked-prescriptions">0</div>
-                    <div class="stat-label">Locked</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Create New Prescription Section -->
+        <!-- ── Prescriptions List ── -->
         <div class="section-card">
-            <h2>📋 Create New Prescription</h2>
-            <form id="prescription-form" class="prescription-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="patient-username">Patient Username *</label>
-                        <input type="text" id="patient-username" name="patient_username" required 
-                               placeholder="Enter patient username">
-                        <small>Patient must be registered in the system</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="medication-name">Medication Name *</label>
-                        <input type="text" id="medication-name" name="medication_name" required 
-                               placeholder="e.g., Amoxicillin">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="dosage">Dosage *</label>
-                        <input type="text" id="dosage" name="dosage" required 
-                               placeholder="e.g., 500mg">
-                    </div>
-                    <div class="form-group">
-                        <label for="frequency">Frequency *</label>
-                        <input type="text" id="frequency" name="frequency" required 
-                               placeholder="e.g., 3 times daily">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="quantity">Quantity *</label>
-                        <input type="number" id="quantity" name="quantity" required min="1" 
-                               placeholder="e.g., 30">
-                    </div>
-                    <div class="form-group">
-                        <label for="duration">Duration (days) *</label>
-                        <input type="number" id="duration" name="duration" required min="1" 
-                               placeholder="e.g., 7">
-                    </div>
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="instructions">Instructions</label>
-                    <textarea id="instructions" name="instructions" rows="3" 
-                              placeholder="Additional instructions for the patient..."></textarea>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Create Prescription</button>
-                    <button type="reset" class="btn btn-secondary">Clear Form</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- My Prescriptions List -->
-        <div class="section-card">
-            <div class="section-header">
-                <h2>📚 My Prescriptions</h2>
-                <div class="filter-controls">
-                    <select id="state-filter" class="filter-select">
+            <div class="section-head">
+                <h2>📋 My Prescriptions</h2>
+                <div class="filter-bar">
+                    <select id="stateFilter">
                         <option value="">All States</option>
-                        <option value="DRAFT">Draft</option>
-                        <option value="PENDING">Pending</option>
+                        <option value="CREATED">Created</option>
+                        <option value="SHARED">Shared</option>
                         <option value="DISPENSED">Dispensed</option>
                         <option value="LOCKED">Locked</option>
+                        <option value="CANCELLED">Cancelled</option>
                     </select>
-                    <button onclick="refreshPrescriptions()" class="btn btn-small">🔄 Refresh</button>
+                    <button class="btn-refresh"
+                        onclick="loadPrescriptions(document.getElementById('stateFilter').value)">
+                        ↺ Refresh
+                    </button>
                 </div>
             </div>
-            
-            <div id="prescriptions-list" class="prescriptions-list">
-                <div class="loading">Loading prescriptions...</div>
+            <div class="section-body">
+                <div id="rxList">
+                    {% if prescriptions %}
+                    <div class="rx-grid">
+                        {% for p in prescriptions %}
+                        <div class="rx-card">
+                            <div class="rx-card-top">
+                                <h3>{{ p.medication_name }}</h3>
+                                <span class="badge badge-{{ p.state.lower() }}">{{ p.state }}</span>
+                            </div>
+                            <div class="rx-meta">
+                                👤 {{ p.patient.full_name if p.patient else '—' }}
+                                &nbsp;·&nbsp;
+                                🗓 {{ p.created_at.strftime('%d %b %Y') }}
+                            </div>
+                            <div class="rx-details">
+                                <span><strong>Dosage:</strong> {{ p.dosage }}</span>
+                                <span><strong>Qty:</strong> {{ p.quantity }}</span>
+                                {% if p.tamper_score > 0 %}
+                                <span style="color:var(--color-danger-dark);"><strong>⚠ Tamper:</strong> {{
+                                    p.tamper_score }}/100</span>
+                                {% endif %}
+                            </div>
+                            <div class="rx-footer">
+                                <small>ID #{{ p.id }}</small>
+                                <a href="{{ url_for('doctor.view_prescription', prescription_id=p.id) }}"
+                                    class="btn-view">View →</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p>No prescriptions yet.</p>
+                        <a href="{{ url_for('doctor.create_form') }}" class="btn-view"
+                            style="padding:.5rem 1.25rem;">Create your first prescription →</a>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
+
+    </div><!-- /page -->
 
     <script>
-        const API_BASE = '';
-
-        // Load doctor statistics
-        async function loadStats() {
-            try {
-                const response = await fetch(`${API_BASE}/api/doctor/stats`);
-                if (!response.ok) throw new Error('Failed to load statistics');
-                
-                const data = await response.json();
-                document.getElementById('total-prescriptions').textContent = data.total || 0;
-                document.getElementById('pending-prescriptions').textContent = data.pending || 0;
-                document.getElementById('dispensed-prescriptions').textContent = data.dispensed || 0;
-                document.getElementById('locked-prescriptions').textContent = data.locked || 0;
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
-        }
-
-        // Load prescriptions created by this doctor
         async function loadPrescriptions(state = '') {
-            const listDiv = document.getElementById('prescriptions-list');
-            listDiv.innerHTML = '<div class="loading">Loading prescriptions...</div>';
+            const list = document.getElementById('rxList');
+            list.innerHTML = '<div class="loading-state">Loading prescriptions…</div>';
 
             try {
-                let url = `${API_BASE}/api/doctor/prescriptions`;
-                if (state) url += `?state=${state}`;
-                
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Failed to load prescriptions');
-                
-                const prescriptions = await response.json();
-                
-                if (prescriptions.length === 0) {
-                    listDiv.innerHTML = '<div class="empty-state">No prescriptions found</div>';
+                const url = '/doctor/api/prescriptions' + (state ? `?state=${state}` : '');
+                const res = await fetch(url, { credentials: 'include' });
+                const data = await res.json();
+
+                if (!data.length) {
+                    list.innerHTML = `<div class="empty-state"><p>No prescriptions found${state ? ' for state: ' + state : ''}.</p></div>`;
                     return;
                 }
 
-                listDiv.innerHTML = prescriptions.map(p => `
-                    <div class="prescription-card">
-                        <div class="prescription-header">
-                            <div>
-                                <h3>${p.medication_name}</h3>
-                                <p class="prescription-meta">Patient: ${p.patient_name} | Created: ${new Date(p.created_at).toLocaleDateString()}</p>
-                            </div>
-                            <span class="badge badge-${p.state.toLowerCase()}">${p.state}</span>
-                        </div>
-                        <div class="prescription-details">
-                            <div class="detail-item">
-                                <strong>Dosage:</strong> ${p.dosage}
-                            </div>
-                            <div class="detail-item">
-                                <strong>Frequency:</strong> ${p.frequency || 'N/A'}
-                            </div>
-                            <div class="detail-item">
-                                <strong>Quantity:</strong> ${p.quantity}
-                            </div>
-                            <div class="detail-item">
-                                <strong>Duration:</strong> ${p.duration || 'N/A'} days
-                            </div>
-                        </div>
-                        ${p.instructions ? `<div class="prescription-instructions">${p.instructions}</div>` : ''}
-                        <div class="prescription-footer">
-                            <small>ID: ${p.id} | Tamper Score: ${p.tamper_score}/100</small>
-                            ${p.dispensed_at ? `<small>Dispensed: ${new Date(p.dispensed_at).toLocaleString()}</small>` : ''}
-                        </div>
+                const badgeClass = s => ({ CREATED: 'badge-created', SHARED: 'badge-shared', DISPENSED: 'badge-dispensed', LOCKED: 'badge-locked', CANCELLED: 'badge-cancelled' }[s] || '');
+                const tamperHtml = p => p.tamper_score > 0 ? `<span style="color:var(--color-danger-dark);"><strong>⚠ Tamper:</strong> ${p.tamper_score}/100</span>` : '';
+                const date = iso => iso ? new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+                list.innerHTML = `<div class="rx-grid">${data.map(p => `
+                <div class="rx-card">
+                    <div class="rx-card-top">
+                        <h3>${p.medication_name}</h3>
+                        <span class="badge ${badgeClass(p.state)}">${p.state}</span>
                     </div>
-                `).join('');
-            } catch (error) {
-                console.error('Error loading prescriptions:', error);
-                listDiv.innerHTML = '<div class="error">Failed to load prescriptions</div>';
+                    <div class="rx-meta">👤 ${p.patient_name} &nbsp;·&nbsp; 🗓 ${date(p.created_at)}</div>
+                    <div class="rx-details">
+                        <span><strong>Dosage:</strong> ${p.dosage}</span>
+                        <span><strong>Qty:</strong> ${p.quantity}</span>
+                        ${tamperHtml(p)}
+                    </div>
+                    <div class="rx-footer">
+                        <small>ID #${p.id}</small>
+                        <a href="/doctor/prescription/${p.id}" class="btn-view">View →</a>
+                    </div>
+                </div>`).join('')}</div>`;
+            } catch {
+                list.innerHTML = '<div class="empty-state"><p>Failed to load prescriptions. Please refresh.</p></div>';
             }
         }
 
-        // Create new prescription
-        document.getElementById('prescription-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/doctor/prescriptions`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    alert('✅ Prescription created successfully!');
-                    e.target.reset();
-                    await loadStats();
-                    await loadPrescriptions();
-                } else {
-                    alert(`❌ Error: ${result.error || 'Failed to create prescription'}`);
-                }
-            } catch (error) {
-                console.error('Error creating prescription:', error);
-                alert('❌ Failed to create prescription');
-            }
-        });
-
-        // Refresh prescriptions
-        function refreshPrescriptions() {
-            const state = document.getElementById('state-filter').value;
-            loadPrescriptions(state);
-        }
-
-        // State filter change
-        document.getElementById('state-filter').addEventListener('change', refreshPrescriptions);
-
-        // Initial load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadStats();
-            loadPrescriptions();
-        });
+        document.getElementById('stateFilter').addEventListener('change', e => loadPrescriptions(e.target.value));
     </script>
 </body>
+
 </html>

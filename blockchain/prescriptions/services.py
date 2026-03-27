@@ -580,8 +580,12 @@ def update_prescription(prescription_id, doctor_id, **kwargs):
     # Verify doctor owns this prescription
     if prescription.doctor_id != doctor_id:
         return None, 'Unauthorized: Not your prescription'
-    
-    # Check if prescription is editable
+
+    # Block edits on locked prescriptions
+    if prescription.is_locked():
+        return None, 'Prescription is locked and cannot be edited.'
+
+    # Check if prescription is editable (state-based check)
     if not prescription.is_editable():
         return None, f'Cannot edit prescription in {prescription.state} state'
     

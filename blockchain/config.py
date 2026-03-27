@@ -8,25 +8,50 @@ management system including database, security, blockchain, and lifecycle settin
 import os
 from datetime import timedelta
 
+# Load .env file when present (development convenience)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed — rely on real env vars
+
+
+def _get_database_url():
+    """
+    Return the database URL, fixing the legacy 'postgres://' scheme that
+    Heroku / some providers still emit (SQLAlchemy 1.4+ requires 'postgresql://').
+    Falls back to a local SQLite file for development.
+    """
+    url = os.environ.get('DATABASE_URL', '')
+    if url.startswith('postgres://'):
+        url = url.replace('postgres://', 'postgresql://', 1)
+    return url or f'sqlite:///{os.path.join(os.path.abspath(os.path.dirname(__file__)), "medisure_vault.db")}'
+
 
 class Config:
     """Base configuration class for MediSure Vault application."""
-    
+
     # ==================== APPLICATION SETTINGS ====================
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    
+
     # ==================== DATABASE SETTINGS ====================
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        f'sqlite:///{os.path.join(BASE_DIR, "medisure_vault.db")}'
+    SQLALCHEMY_DATABASE_URI = _get_database_url()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ECHO = False  # Set to True for SQL query debugging
-    
+    SQLALCHEMY_ECHO = False
+
+    # Connection pool settings — important for PostgreSQL in production
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,      # test connections before use
+        'pool_recycle':  300,       # recycle connections every 5 min
+        'pool_size':     5,
+        'max_overflow':  10,
+    }
+
     # ==================== SECURITY SETTINGS ====================
-    # Password hashing
     PASSWORD_HASH_ALGORITHM = 'sha256'
     PASSWORD_SALT_LENGTH = 32
-    
+
     # Session management
     SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
     SESSION_COOKIE_HTTPONLY = True
@@ -221,11 +246,19 @@ class ProductionConfig(Config):
     """Production-specific configuration."""
     DEBUG = False
     TESTING = False
-    SESSION_COOKIE_SECURE = True
-    
-    # Override with strong secret key from environment
-    # Validation will happen in get_config() when production is actually selected
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'production-secret-key-must-be-set'
+    SESSION_COOKIE_SECURE = True   # requires HTTPS
+    SQLALCHEMY_ECHO = False
+
+    @classmethod
+    def _validate(cls):
+        """Called by get_config() — raises if required env vars are missing."""
+        if not os.environ.get('SECRET_KEY'):
+            raise ValueError(
+                "SECRET_KEY environment variable is not set. "
+                "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+            )
+
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'REPLACE_ME'
 
 
 class TestingConfig(Config):
@@ -248,13 +281,20 @@ config = {
 def get_config(env=None):
     """
     Get configuration object based on environment.
-    
+
     Args:
         env (str): Environment name ('development', 'production', 'testing')
-        
+
     Returns:
-        Config: Configuration object for the specified environment
+        Config: Configuration class for the specified environment
     """
     if env is None:
         env = os.environ.get('FLASK_ENV', 'development')
-    return config.get(env, config['default'])
+
+    cfg = config.get(env, config['default'])
+
+    # Validate required env vars only when production is actually selected
+    if env == 'production' and hasattr(cfg, '_validate'):
+        cfg._validate()
+
+    return cfg

@@ -1,71 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Registration - MediSure Vault</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
                 <div class="auth-logo">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1e6fd9" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                        <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                        <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
                     </svg>
                 </div>
                 <h1 class="auth-title">Doctor Registration</h1>
                 <p class="auth-subtitle">Join MediSure Vault as a Medical Professional</p>
             </div>
-            
-            <form id="register-form">
-                <h3 style="margin-bottom: 1rem; font-size: 1.125rem; color: #374151;">Account Information</h3>
-                
+
+            <!-- Flash message banner -->
+            <div id="flashMessage" style="display:none;"></div>
+
+            <form id="register-form" novalidate>
+                <h3 style="margin-bottom:1rem;font-size:1.125rem;color:#374151;">Account Information</h3>
+
                 <div class="form-group">
                     <label for="username" class="form-label">Username *</label>
-                    <input type="text" id="username" name="username" class="form-input" required 
-                           placeholder="Choose a unique username">
+                    <input type="text" id="username" name="username" class="form-input"
+                        placeholder="Choose a unique username">
                 </div>
-
                 <div class="form-group">
                     <label for="email" class="form-label">Email *</label>
-                    <input type="email" id="email" name="email" class="form-input" required 
-                           placeholder="your.email@hospital.com">
+                    <input type="email" id="email" name="email" class="form-input"
+                        placeholder="your.email@hospital.com">
                 </div>
-
                 <div class="form-group">
                     <label for="password" class="form-label">Password *</label>
-                    <input type="password" id="password" name="password" class="form-input" required 
-                           placeholder="Minimum 8 characters">
+                    <input type="password" id="password" name="password" class="form-input"
+                        placeholder="Minimum 8 characters">
                 </div>
-
                 <div class="form-group">
                     <label for="confirm-password" class="form-label">Confirm Password *</label>
-                    <input type="password" id="confirm-password" name="confirm_password" class="form-input" required 
-                           placeholder="Re-enter your password">
+                    <input type="password" id="confirm-password" name="confirm_password" class="form-input"
+                        placeholder="Re-enter your password">
                 </div>
 
-                <h3 style="margin-bottom: 1rem; margin-top: 1.5rem; font-size: 1.125rem; color: #374151;">Personal Information</h3>
+                <h3 style="margin-bottom:1rem;margin-top:1.5rem;font-size:1.125rem;color:#374151;">Personal Information
+                </h3>
 
                 <div class="form-group">
                     <label for="full-name" class="form-label">Full Name *</label>
-                    <input type="text" id="full-name" name="full_name" class="form-input" required 
-                           placeholder="Dr. John Smith">
+                    <input type="text" id="full-name" name="full_name" class="form-input" placeholder="Dr. John Smith">
                 </div>
 
-                <h3 style="margin-bottom: 1rem; margin-top: 1.5rem; font-size: 1.125rem; color: #374151;">Professional Credentials</h3>
+                <h3 style="margin-bottom:1rem;margin-top:1.5rem;font-size:1.125rem;color:#374151;">Professional
+                    Credentials</h3>
 
                 <div class="form-group">
                     <label for="license-number" class="form-label">Medical License Number *</label>
-                    <input type="text" id="license-number" name="license_number" class="form-input" required 
-                           placeholder="e.g., MD123456">
+                    <input type="text" id="license-number" name="license_number" class="form-input"
+                        placeholder="e.g., MD123456">
                 </div>
-
                 <div class="form-group">
                     <label for="specialization" class="form-label">Specialization *</label>
-                    <select id="specialization" name="specialization" class="form-input" required>
+                    <select id="specialization" name="specialization" class="form-input">
                         <option value="">Select your specialization</option>
                         <option value="General Practice">General Practice</option>
                         <option value="Internal Medicine">Internal Medicine</option>
@@ -79,71 +81,105 @@
                         <option value="Other">Other</option>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label for="hospital" class="form-label">Hospital/Clinic Name *</label>
-                    <input type="text" id="hospital" name="hospital" class="form-input" required 
-                           placeholder="Enter your hospital or clinic name">
+                    <input type="text" id="hospital" name="hospital" class="form-input"
+                        placeholder="Enter your hospital or clinic name">
                 </div>
-
                 <div class="form-group">
                     <label for="years-experience" class="form-label">Years of Experience</label>
-                    <input type="number" id="years-experience" name="years_experience" class="form-input" min="0" 
-                           placeholder="e.g., 5">
+                    <input type="number" id="years-experience" name="years_experience" class="form-input" min="0"
+                        placeholder="e.g., 5">
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block btn-lg">Register as Doctor</button>
+                <button type="submit" id="submitBtn" class="btn btn-primary btn-block btn-lg">Register as
+                    Doctor</button>
             </form>
 
             <div class="auth-footer">
-                <p>Already have an account? <a href="{{ url_for('auth.authority_login') }}">Login here</a></p>
-                <p><a href="{{ url_for('landing') }}">← Back to Home</a></p>
+                <p>Already have an account? <a href="/authority-login">Login here</a></p>
+                <p><a href="/">← Back to Home</a></p>
             </div>
         </div>
     </div>
 
+    <script src="{{ url_for('static', filename='auth.js') }}"></script>
     <script>
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-            
-            if (password !== confirmPassword) {
-                alert('❌ Passwords do not match!');
-                return;
-            }
+        const form = document.getElementById('register-form');
+        const usernameEl = document.getElementById('username');
+        const emailEl = document.getElementById('email');
+        const passwordEl = document.getElementById('password');
+        const confirmEl = document.getElementById('confirm-password');
+        const fullNameEl = document.getElementById('full-name');
+        const licenseEl = document.getElementById('license-number');
+        const specEl = document.getElementById('specialization');
+        const hospitalEl = document.getElementById('hospital');
+        const submitBtn = document.getElementById('submitBtn');
 
-            if (password.length < 8) {
-                alert('❌ Password must be at least 8 characters long!');
-                return;
-            }
-            
-            const formData = new FormData(e.target);
+        // Blur validators
+        usernameEl.addEventListener('blur', () => { const e = validateUsername(usernameEl.value.trim()); e ? setFieldError(usernameEl, e) : clearFieldError(usernameEl); });
+        usernameEl.addEventListener('input', () => clearFieldError(usernameEl));
+        emailEl.addEventListener('blur', () => { const e = validateEmail(emailEl.value.trim()); e ? setFieldError(emailEl, e) : clearFieldError(emailEl); });
+        emailEl.addEventListener('input', () => clearFieldError(emailEl));
+        passwordEl.addEventListener('input', () => { renderStrengthBar(passwordEl); clearFieldError(passwordEl); if (confirmEl.value) { const e = validateConfirmPassword(passwordEl.value, confirmEl.value); e ? setFieldError(confirmEl, e) : clearFieldError(confirmEl); } });
+        passwordEl.addEventListener('blur', () => { const e = validatePassword(passwordEl.value); e ? setFieldError(passwordEl, e) : clearFieldError(passwordEl); });
+        confirmEl.addEventListener('input', () => { const e = validateConfirmPassword(passwordEl.value, confirmEl.value); e ? setFieldError(confirmEl, e) : clearFieldError(confirmEl); });
+        fullNameEl.addEventListener('blur', () => { !fullNameEl.value.trim() ? setFieldError(fullNameEl, 'Full name is required') : clearFieldError(fullNameEl); });
+        fullNameEl.addEventListener('input', () => clearFieldError(fullNameEl));
+        licenseEl.addEventListener('blur', () => { !licenseEl.value.trim() ? setFieldError(licenseEl, 'License number is required') : clearFieldError(licenseEl); });
+        licenseEl.addEventListener('input', () => clearFieldError(licenseEl));
+        specEl.addEventListener('change', () => { !specEl.value ? setFieldError(specEl, 'Please select a specialization') : clearFieldError(specEl); });
+        hospitalEl.addEventListener('blur', () => { !hospitalEl.value.trim() ? setFieldError(hospitalEl, 'Hospital name is required') : clearFieldError(hospitalEl); });
+        hospitalEl.addEventListener('input', () => clearFieldError(hospitalEl));
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            let valid = true;
+            const checks = [
+                [usernameEl, validateUsername(usernameEl.value.trim())],
+                [emailEl, validateEmail(emailEl.value.trim())],
+                [passwordEl, validatePassword(passwordEl.value)],
+                [confirmEl, validateConfirmPassword(passwordEl.value, confirmEl.value)],
+                [fullNameEl, !fullNameEl.value.trim() ? 'Full name is required' : null],
+                [licenseEl, !licenseEl.value.trim() ? 'License number is required' : null],
+                [specEl, !specEl.value ? 'Please select a specialization' : null],
+                [hospitalEl, !hospitalEl.value.trim() ? 'Hospital name is required' : null],
+            ];
+
+            checks.forEach(([el, err]) => { if (err) { setFieldError(el, err); valid = false; } });
+            if (!valid) { flashMessage('Please fix the errors above before submitting.', 'warning'); return; }
+
+            setLoading(submitBtn, true, 'Register as Doctor');
+
+            const formData = new FormData(form);
             const data = Object.fromEntries(formData);
             data.role = 'DOCTOR';
             delete data.confirm_password;
-            
+
             try {
                 const response = await fetch('/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (response.ok) {
-                    alert('✅ Registration successful! Please login.');
-                    window.location.href = '/authority-login';
+                    flashMessage('Registration successful! Redirecting to login...', 'success');
+                    form.reset();
+                    setTimeout(() => { window.location.href = '/authority-login'; }, 2000);
                 } else {
-                    alert(`❌ Registration failed: ${result.error || 'Unknown error'}`);
+                    flashMessage(result.error || 'Registration failed. Please try again.', 'error');
+                    setLoading(submitBtn, false, 'Register as Doctor');
                 }
-            } catch (error) {
-                console.error('Registration error:', error);
-                alert('❌ Registration failed. Please try again.');
+            } catch {
+                flashMessage('Network error. Please check your connection.', 'error');
+                setLoading(submitBtn, false, 'Register as Doctor');
             }
         });
     </script>
 </body>
+
 </html>

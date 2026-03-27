@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescription #{{ prescription.id }} - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f9fafb 0%, #f0f4f8 100%);
+        }
+
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, .95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--color-gray-200);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 64px;
+        }
+
+        .top-bar-brand {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .top-bar-nav {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .top-bar-nav a {
+            padding: .45rem .9rem;
+            border-radius: var(--radius-lg);
+            font-size: .875rem;
+            font-weight: 500;
+            color: var(--color-gray-600);
+            transition: all .15s;
+        }
+
+        .top-bar-nav a:hover {
+            background: var(--color-primary-50);
+            color: var(--color-primary);
+        }
+
+        .top-bar-nav a.btn-logout {
+            color: var(--color-danger);
+        }
+
+        .top-bar-nav a.btn-logout:hover {
+            background: var(--color-danger-light);
+        }
+
+        .page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-size: .85rem;
+            color: var(--color-gray-500);
+            margin-bottom: 1.5rem;
+        }
+
+        .breadcrumb a {
+            color: var(--color-primary);
+            font-weight: 500;
+        }
+
+        /* Page title row */
+        .page-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: .75rem;
+        }
+
+        .page-title-row h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--color-gray-900);
+        }
+
+        /* State badge */
+        .state-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .3rem .85rem;
+            border-radius: var(--radius-full);
+            font-size: .8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .state-CREATED {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .state-SHARED {
+            background: #ede9fe;
+            color: #6d28d9;
+        }
+
+        .state-DISPENSED {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .state-LOCKED {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .state-CANCELLED {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        /* Cards */
+        .detail-card {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-200);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+        }
+
+        .detail-card-header {
+            padding: .9rem 1.5rem;
+            border-bottom: 1px solid var(--color-gray-100);
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .detail-card-header h2 {
+            font-size: .95rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--color-gray-700);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .detail-card-body {
+            padding: 1.25rem 1.5rem;
+        }
+
+        /* Row layout */
+        .detail-row {
+            display: flex;
+            gap: 1rem;
+            padding: .55rem 0;
+            border-bottom: 1px solid var(--color-gray-50);
+            flex-wrap: wrap;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--color-gray-500);
+            min-width: 150px;
+            flex-shrink: 0;
+        }
+
+        .detail-value {
+            font-size: .9rem;
+            color: var(--color-gray-900);
+            flex: 1;
+        }
+
+        /* Timeline */
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: flex-start;
+            gap: .85rem;
+        }
+
+        .timeline-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-top: .35rem;
+            flex-shrink: 0;
+        }
+
+        .timeline-dot.done {
+            background: var(--color-success);
+        }
+
+        .timeline-dot.pending {
+            background: var(--color-gray-300);
+            border: 2px dashed var(--color-gray-400);
+        }
+
+        .timeline-text {
+            font-size: .875rem;
+        }
+
+        .timeline-text strong {
+            display: block;
+            color: var(--color-gray-800);
+            font-weight: 600;
+        }
+
+        .timeline-text span {
+            color: var(--color-gray-500);
+            font-size: .8rem;
+        }
+
+        /* Tamper */
+        .tamper-bar-wrap {
+            margin-top: .5rem;
+        }
+
+        .tamper-bar-bg {
+            height: 8px;
+            background: var(--color-gray-100);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+
+        .tamper-bar-fill {
+            height: 100%;
+            border-radius: var(--radius-full);
+            transition: width .4s;
+        }
+
+        .tamper-LOW {
+            background: var(--color-success);
+        }
+
+        .tamper-MEDIUM {
+            background: var(--color-warning);
+        }
+
+        .tamper-HIGH {
+            background: var(--color-danger);
+        }
+
+        .tamper-CRITICAL {
+            background: #7f1d1d;
+        }
+
+        .tamper-label {
+            font-size: .8rem;
+            font-weight: 700;
+            margin-top: .35rem;
+        }
+
+        .tamper-label.LOW {
+            color: var(--color-success-dark);
+        }
+
+        .tamper-label.MEDIUM {
+            color: var(--color-warning-dark);
+        }
+
+        .tamper-label.HIGH {
+            color: var(--color-danger-dark);
+        }
+
+        .tamper-label.CRITICAL {
+            color: #7f1d1d;
+        }
+
+        /* Action buttons */
+        .action-card {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-200);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .action-card h2 {
+            font-size: .95rem;
+            font-weight: 700;
+            margin: 0 0 1rem;
+            color: var(--color-gray-700);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .action-row {
+            display: flex;
+            gap: .75rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn-share {
+            padding: .6rem 1.4rem;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, var(--color-primary), #1557b0);
+            color: #fff;
+            font-weight: 700;
+            font-size: .9rem;
+            border: none;
+            cursor: pointer;
+            transition: all .2s;
+            box-shadow: 0 4px 12px rgba(30, 111, 217, .25);
+        }
+
+        .btn-share:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(30, 111, 217, .35);
+        }
+
+        .btn-cancel-rx {
+            padding: .6rem 1.25rem;
+            border-radius: var(--radius-lg);
+            background: var(--color-danger-light);
+            color: #991b1b;
+            font-weight: 700;
+            font-size: .9rem;
+            border: 1.5px solid #fca5a5;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .btn-cancel-rx:hover {
+            background: #fecaca;
+            transform: translateY(-1px);
+        }
+
+        .info-note {
+            font-size: .85rem;
+            color: var(--color-gray-500);
+            padding: .6rem .9rem;
+            background: var(--color-gray-50);
+            border-radius: var(--radius-md);
+            border-left: 3px solid var(--color-primary-200);
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="top-bar">
+        <div class="top-bar-brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            MediSure Vault
+        </div>
+        <div class="top-bar-nav">
+            <a href="{{ url_for('doctor.dashboard') }}">← Dashboard</a>
+            <a href="{{ url_for('doctor.create_form') }}">+ New</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+        </div>
+    </nav>
+
+    <div class="page">
+
+        <div class="breadcrumb">
+            <a href="{{ url_for('doctor.dashboard') }}">Dashboard</a>
+            <span>›</span>
+            <span>Prescription #{{ prescription.id }}</span>
+        </div>
+
+        <!-- Title row -->
+        <div class="page-title-row">
+            <h1>{{ prescription.medication_name }}</h1>
+            <span class="state-badge state-{{ prescription.state }}">
+                {% if prescription.state == 'CREATED' %}📝
+                {% elif prescription.state == 'SHARED' %}🔗
+                {% elif prescription.state == 'DISPENSED' %}✅
+                {% elif prescription.state == 'LOCKED' %}🔒
+                {% elif prescription.state == 'CANCELLED' %}❌
+                {% endif %}
+                {{ prescription.state }}
+            </span>
+        </div>
+
+        <!-- Flash -->
+        <div id="flashMessage" style="display:none;margin-bottom:1rem;"></div>
+
+        <!-- ── Prescription Details ── -->
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h2>Prescription Details</h2>
+            </div>
+            <div class="detail-card-body">
+                <div class="detail-row">
+                    <span class="detail-label">Patient</span>
+                    <span class="detail-value">{{ prescription.patient.full_name if prescription.patient else '—' }}
+                        {% if prescription.patient %}<span style="color:var(--color-gray-400);font-size:.8rem;"> ({{
+                            prescription.patient.username }})</span>{% endif %}
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Medication</span>
+                    <span class="detail-value" style="font-weight:600;">{{ prescription.medication_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Dosage</span>
+                    <span class="detail-value">{{ prescription.dosage }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Quantity</span>
+                    <span class="detail-value">{{ prescription.quantity }} units</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Refills Allowed</span>
+                    <span class="detail-value">{{ prescription.refills_allowed }}</span>
+                </div>
+                {% if prescription.diagnosis %}
+                <div class="detail-row">
+                    <span class="detail-label">Diagnosis</span>
+                    <span class="detail-value">{{ prescription.diagnosis }}</span>
+                </div>
+                {% endif %}
+                {% if prescription.instructions %}
+                <div class="detail-row">
+                    <span class="detail-label">Instructions</span>
+                    <span class="detail-value">{{ prescription.instructions }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ── Timeline ── -->
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <h2>Lifecycle Timeline</h2>
+            </div>
+            <div class="detail-card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-dot done"></div>
+                        <div class="timeline-text">
+                            <strong>Created</strong>
+                            <span>{{ prescription.created_at.strftime('%d %b %Y, %H:%M') if prescription.created_at else
+                                '—' }}</span>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot {{ 'done' if prescription.shared_at else 'pending' }}"></div>
+                        <div class="timeline-text">
+                            <strong>Shared with Patient</strong>
+                            <span>{{ prescription.shared_at.strftime('%d %b %Y, %H:%M') if prescription.shared_at else
+                                'Not yet shared' }}</span>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot {{ 'done' if prescription.dispensed_at else 'pending' }}"></div>
+                        <div class="timeline-text">
+                            <strong>Dispensed</strong>
+                            <span>{{ prescription.dispensed_at.strftime('%d %b %Y, %H:%M') if prescription.dispensed_at
+                                else 'Not yet dispensed' }}</span>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot {{ 'done' if prescription.locked_at else 'pending' }}"></div>
+                        <div class="timeline-text">
+                            <strong>Locked (Immutable)</strong>
+                            <span>{{ prescription.locked_at.strftime('%d %b %Y, %H:%M') if prescription.locked_at else
+                                'Not yet locked' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Tamper Score ── -->
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                <h2>Integrity & Security</h2>
+            </div>
+            <div class="detail-card-body">
+                <div class="detail-row" style="border:none;padding:0;">
+                    <span class="detail-label">Tamper Score</span>
+                    <div style="flex:1;">
+                        <div class="tamper-bar-wrap">
+                            <div class="tamper-bar-bg">
+                                <div class="tamper-bar-fill tamper-{{ prescription.get_tamper_severity() }}"
+                                    style="width:{{ prescription.tamper_score }}%;"></div>
+                            </div>
+                            <div class="tamper-label {{ prescription.get_tamper_severity() }}">
+                                {{ prescription.tamper_score }}/100 — {{ prescription.get_tamper_severity() }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Actions ── -->
+        {% if prescription.is_locked() %}
+        <div
+            style="background:#fee2e2;border:1px solid #fca5a5;border-radius:var(--radius-lg);padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991b1b" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <p style="margin:0;color:#991b1b;font-weight:600;font-size:.9rem;">
+                This prescription is <strong>LOCKED</strong>. It has been dispensed by a pharmacist and cannot be
+                edited, shared, or cancelled.
+            </p>
+        </div>
+        {% elif prescription.state != 'CANCELLED' %}
+        <div class="action-card">
+            <h2>Actions</h2>
+            <div class="action-row">
+                {% if prescription.state == 'CREATED' %}
+                <button class="btn-share" onclick="doAction('share')">🔗 Share with Patient</button>
+                <button class="btn-cancel-rx" onclick="doAction('cancel')">❌ Cancel Prescription</button>
+                {% elif prescription.state == 'SHARED' %}
+                <p class="info-note">
+                    ✅ Prescription has been shared. The patient can now generate a one-time access token for a pharmacy.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div><!-- /page -->
+
+    <script src="{{ url_for('static', filename='auth.js') }}"></script>
+    <script>
+        async function doAction(action) {
+            const urls = {
+                share: "{{ url_for('doctor.share',  prescription_id=prescription.id) }}",
+                cancel: "{{ url_for('doctor.cancel', prescription_id=prescription.id) }}"
+            };
+            const msgs = {
+                share: 'Share this prescription with the patient?',
+                cancel: 'Cancel this prescription? This cannot be undone.'
+            };
+            if (!confirm(msgs[action])) return;
+
+            try {
+                const res = await fetch(urls[action], { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' });
+                const data = await res.json();
+                if (res.ok) {
+                    flashMessage(action === 'share' ? 'Prescription shared successfully.' : 'Prescription cancelled.', 'success');
+                    setTimeout(() => location.reload(), 1200);
+                } else {
+                    flashMessage(data.error || 'Action failed.', 'error');
+                }
+            } catch {
+                flashMessage('Network error. Please try again.', 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

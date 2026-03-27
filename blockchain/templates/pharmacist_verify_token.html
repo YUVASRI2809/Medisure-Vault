@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Patient Token - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f9fafb 0%, #f0f4f8 100%);
+        }
+
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, .95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--color-gray-200);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 64px;
+        }
+
+        .top-bar-brand {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-secondary);
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .top-bar-nav {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .top-bar-nav a {
+            padding: .45rem .9rem;
+            border-radius: var(--radius-lg);
+            font-size: .875rem;
+            font-weight: 500;
+            color: var(--color-gray-600);
+            transition: all .15s;
+        }
+
+        .top-bar-nav a:hover {
+            background: #f0fdfa;
+            color: var(--color-secondary);
+        }
+
+        .top-bar-nav a.btn-logout {
+            color: var(--color-danger);
+        }
+
+        .top-bar-nav a.btn-logout:hover {
+            background: var(--color-danger-light);
+        }
+
+        .page {
+            max-width: 520px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-size: .85rem;
+            color: var(--color-gray-500);
+            margin-bottom: 1.5rem;
+        }
+
+        .breadcrumb a {
+            color: var(--color-secondary);
+            font-weight: 500;
+        }
+
+        /* Card */
+        .token-card {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-200);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .08);
+            overflow: hidden;
+        }
+
+        .token-card-header {
+            background: linear-gradient(135deg, var(--color-secondary) 0%, #0f766e 100%);
+            padding: 1.5rem 2rem;
+            color: #fff;
+        }
+
+        .token-card-header h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 0 0 .25rem;
+            color: #fff;
+        }
+
+        .token-card-header p {
+            margin: 0;
+            opacity: .85;
+            font-size: .875rem;
+        }
+
+        .token-card-body {
+            padding: 2rem;
+        }
+
+        /* How it works */
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+            margin-bottom: 1.75rem;
+            padding: 1rem 1.25rem;
+            background: var(--color-gray-50);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-gray-200);
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: .75rem;
+            font-size: .85rem;
+            color: var(--color-gray-600);
+        }
+
+        .step-num {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--color-secondary);
+            color: #fff;
+            font-size: .72rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: .05rem;
+        }
+
+        /* Input */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: .875rem;
+            font-weight: 600;
+            color: var(--color-gray-700);
+            margin-bottom: .5rem;
+        }
+
+        .token-input {
+            width: 100%;
+            padding: .75rem 1rem;
+            border: 2px solid var(--color-gray-300);
+            border-radius: var(--radius-lg);
+            font-size: .95rem;
+            font-family: monospace;
+            letter-spacing: .05em;
+            color: var(--color-gray-900);
+            background: #fff;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .token-input:focus {
+            outline: none;
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, .12);
+        }
+
+        .token-input.error {
+            border-color: var(--color-danger);
+        }
+
+        /* Error banner */
+        .error-banner {
+            background: var(--color-danger-light);
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+            padding: .85rem 1rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 1.25rem;
+            font-size: .875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        /* Submit */
+        .btn-verify {
+            width: 100%;
+            padding: .75rem;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, var(--color-secondary), #0f766e);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all .2s;
+            box-shadow: 0 4px 14px rgba(13, 148, 136, .25);
+        }
+
+        .btn-verify:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(13, 148, 136, .35);
+        }
+
+        .btn-verify:disabled {
+            opacity: .6;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        /* Live preview (shown after JS validation) */
+        .token-preview {
+            display: none;
+            background: #f0fdfa;
+            border: 1px solid #99f6e4;
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.25rem;
+            margin-top: 1rem;
+        }
+
+        .token-preview h3 {
+            font-size: .85rem;
+            font-weight: 700;
+            color: #0f766e;
+            margin: 0 0 .5rem;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .token-preview .preview-row {
+            display: flex;
+            gap: .75rem;
+            font-size: .85rem;
+            margin-bottom: .3rem;
+        }
+
+        .token-preview .preview-label {
+            color: #0f766e;
+            font-weight: 600;
+            min-width: 100px;
+        }
+
+        .token-preview .preview-value {
+            color: var(--color-gray-800);
+        }
+
+        .btn-confirm {
+            margin-top: .75rem;
+            padding: .55rem 1.25rem;
+            border-radius: var(--radius-lg);
+            background: var(--color-secondary);
+            color: #fff;
+            font-size: .875rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .btn-confirm:hover {
+            background: #0f766e;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="top-bar">
+        <div class="top-bar-brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="9" y1="9" x2="15" y2="9" />
+                <line x1="9" y1="15" x2="15" y2="15" />
+            </svg>
+            MediSure Vault
+        </div>
+        <div class="top-bar-nav">
+            <a href="{{ url_for('pharmacist.dashboard') }}">← Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+        </div>
+    </nav>
+
+    <div class="page">
+        <div class="breadcrumb">
+            <a href="{{ url_for('pharmacist.dashboard') }}">Dashboard</a>
+            <span>›</span><span>Verify Token</span>
+        </div>
+
+        <div class="token-card">
+            <div class="token-card-header">
+                <h1>🔑 Verify Patient Token</h1>
+                <p>Enter the one-time token provided by the patient to access their prescription.</p>
+            </div>
+            <div class="token-card-body">
+
+                <!-- How it works -->
+                <div class="steps">
+                    <div class="step"><span class="step-num">1</span><span>Patient generates a token from their
+                            dashboard</span></div>
+                    <div class="step"><span class="step-num">2</span><span>Patient shares the token with you verbally or
+                            on screen</span></div>
+                    <div class="step"><span class="step-num">3</span><span>Enter the token below to view and dispense
+                            the prescription</span></div>
+                </div>
+
+                <!-- Server-side error -->
+                {% if error %}
+                <div class="error-banner">❌ {{ error }}</div>
+                {% endif %}
+
+                <!-- Flash (JS) -->
+                <div id="flashMessage" style="display:none;margin-bottom:1rem;"></div>
+
+                <!-- Token form -->
+                <form id="tokenForm" novalidate>
+                    <div class="form-group">
+                        <label for="tokenInput" class="form-label">Patient Access Token</label>
+                        <input type="text" id="tokenInput" class="token-input {% if error %}error{% endif %}"
+                            placeholder="Paste or type the token here…" value="{{ token or '' }}" autocomplete="off"
+                            spellcheck="false">
+                    </div>
+
+                    <!-- Live preview (populated by JS after API check) -->
+                    <div id="tokenPreview" class="token-preview">
+                        <h3>✅ Token Valid</h3>
+                        <div class="preview-row"><span class="preview-label">Medication</span><span
+                                class="preview-value" id="previewMed">—</span></div>
+                        <div class="preview-row"><span class="preview-label">Patient</span><span class="preview-value"
+                                id="previewPatient">—</span></div>
+                        <div class="preview-row"><span class="preview-label">Expires</span><span class="preview-value"
+                                id="previewExpiry">—</span></div>
+                        <button type="button" class="btn-confirm" id="confirmBtn" onclick="submitToken()">View
+                            Prescription →</button>
+                    </div>
+
+                    <button type="submit" id="verifyBtn" class="btn-verify" style="margin-top:1rem;">
+                        Verify Token
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='auth.js') }}"></script>
+    <script>
+        const tokenInput = document.getElementById('tokenInput');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const preview = document.getElementById('tokenPreview');
+        let _prescriptionId = null;
+        let _validToken = '';
+
+        // Clear error styling on input
+        tokenInput.addEventListener('input', () => {
+            tokenInput.classList.remove('error');
+            preview.style.display = 'none';
+            _prescriptionId = null;
+        });
+
+        document.getElementById('tokenForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = tokenInput.value.trim();
+
+            if (!token) {
+                setFieldError(tokenInput, 'Please enter a token.');
+                return;
+            }
+
+            setLoading(verifyBtn, true, 'Verify Token');
+
+            try {
+                const res = await fetch("{{ url_for('pharmacist.verify_token') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ token })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.valid) {
+                    // Show preview panel
+                    _prescriptionId = data.prescription_id;
+                    _validToken = token;
+                    document.getElementById('previewMed').textContent = data.medication;
+                    document.getElementById('previewPatient').textContent = data.patient_name;
+                    const exp = new Date(data.expires_at);
+                    document.getElementById('previewExpiry').textContent =
+                        exp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) +
+                        ' (' + Math.max(0, Math.round((exp - new Date()) / 60000)) + ' min left)';
+                    preview.style.display = 'block';
+                    verifyBtn.style.display = 'none';
+                } else {
+                    tokenInput.classList.add('error');
+                    flashMessage(data.error || 'Token validation failed.', 'error');
+                    setLoading(verifyBtn, false, 'Verify Token');
+                }
+            } catch {
+                flashMessage('Network error. Please try again.', 'error');
+                setLoading(verifyBtn, false, 'Verify Token');
+            }
+        });
+
+        function submitToken() {
+            if (_prescriptionId) {
+                // Redirect to prescription detail with token in URL
+                window.location.href = `/pharmacist/prescription/${_prescriptionId}?token=${encodeURIComponent(_validToken)}`;
+            }
+        }
+    </script>
+</body>
+
+</html>

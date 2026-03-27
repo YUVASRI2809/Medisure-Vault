@@ -42,9 +42,11 @@ def create_app(config_name=None):
     register_error_handlers(app)
     
     # Initialize database and blockchain
-    with app.app_context():
-        initialize_database()
-        initialize_blockchain()
+    # In production, run `python init_db.py` once instead of doing this on every startup.
+    if config_name != 'production':
+        with app.app_context():
+            initialize_database()
+            initialize_blockchain()
     
     # Register template filters
     register_template_filters(app)
@@ -66,11 +68,17 @@ def register_blueprints(app):
     from auth.routes import auth_bp
     from prescriptions.routes import prescriptions_bp
     from access.routes import access_bp
-    
+    from routes.doctor import doctor_bp
+    from routes.pharmacist import pharmacist_bp
+    from routes.patient import patient_bp
+
     # Register blueprints with URL prefixes
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(prescriptions_bp, url_prefix='/prescriptions')
     app.register_blueprint(access_bp, url_prefix='/access')
+    app.register_blueprint(doctor_bp)       # url_prefix='/doctor' set in blueprint
+    app.register_blueprint(pharmacist_bp)   # url_prefix='/pharmacist' set in blueprint
+    app.register_blueprint(patient_bp)      # url_prefix='/patient' set in blueprint
     
     # Additional API routes for dashboard features
     @app.route('/api/anomalies/statistics', methods=['GET'])
@@ -239,41 +247,29 @@ def register_blueprints(app):
     
     @app.route('/dashboard')
     def dashboard():
-        """Dashboard route - requires authentication and routes to role-specific dashboard."""
+        """Dashboard route — redirects to the role-specific blueprint dashboard."""
         from auth.utils import login_required
-        from models import User, Doctor, Pharmacist, Patient
-        
+        from models import User
+
         @login_required
         def _dashboard():
-            user_role = session.get('role', 'PATIENT')
-            user_id = session.get('user_id')
-            
-            # Get current user
-            current_user = User.query.get(user_id)
-            
-            # Route to role-specific dashboard
+            user_role = session.get('role', '')
+            user_id   = session.get('user_id')
+
             if user_role == 'DOCTOR':
-                doctor_profile = Doctor.query.filter_by(user_id=user_id).first()
-                return render_template('doctor_dashboard.html', 
-                                     current_user=current_user,
-                                     doctor_profile=doctor_profile)
+                return redirect(url_for('doctor.dashboard'))
             elif user_role == 'PHARMACIST':
-                pharmacist_profile = Pharmacist.query.filter_by(user_id=user_id).first()
-                return render_template('pharmacist_dashboard.html',
-                                     current_user=current_user,
-                                     pharmacist_profile=pharmacist_profile)
+                return redirect(url_for('pharmacist.dashboard'))
             elif user_role == 'PATIENT':
-                patient_profile = Patient.query.filter_by(user_id=user_id).first()
-                return render_template('patient_dashboard.html',
-                                     current_user=current_user,
-                                     patient_profile=patient_profile)
+                return redirect(url_for('patient.dashboard'))
             else:
-                # Admin or other roles use generic dashboard
-                return render_template('dashboard.html', 
-                                     role=user_role,
-                                     user_id=user_id,
-                                     username=current_user.username)
-        
+                # ADMIN or unknown — generic dashboard
+                current_user = User.query.get(user_id)
+                return render_template('dashboard.html',
+                                       role=user_role,
+                                       user_id=user_id,
+                                       username=current_user.username if current_user else 'Admin')
+
         return _dashboard()
     
     @app.route('/prescriptions-manager')
@@ -984,9 +980,9 @@ def initialize_blockchain():
         blockchain = Blockchain()
         
         # The Blockchain constructor automatically creates and saves genesis block
-        print("✓ Genesis block created successfully")
+        print("[OK] Genesis block created successfully")
     else:
-        print("✓ Blockchain already initialized")
+        print("[OK] Blockchain already initialized")
 
 
 def check_database_connection():

@@ -1,414 +1,614 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Dashboard - MediSure Vault</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f9fafb 0%, #f0f4f8 100%);
+        }
+
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, .95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--color-gray-200);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 64px;
+        }
+
+        .top-bar-brand {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-patient, #8b5cf6);
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .top-bar-nav {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .top-bar-nav a {
+            padding: .45rem .9rem;
+            border-radius: var(--radius-lg);
+            font-size: .875rem;
+            font-weight: 500;
+            color: var(--color-gray-600);
+            transition: all .15s;
+        }
+
+        .top-bar-nav a:hover {
+            background: #f3e8ff;
+            color: var(--color-patient, #8b5cf6);
+        }
+
+        .top-bar-nav a.active {
+            background: var(--color-patient, #8b5cf6);
+            color: #fff;
+        }
+
+        .top-bar-nav a.btn-logout {
+            color: var(--color-danger);
+        }
+
+        .top-bar-nav a.btn-logout:hover {
+            background: var(--color-danger-light);
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Welcome banner */
+        .welcome-banner {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            border-radius: var(--radius-xl);
+            padding: 1.75rem 2rem;
+            color: #fff;
+            margin-bottom: 1.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 8px 24px rgba(139, 92, 246, .25);
+        }
+
+        .welcome-banner h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 0 0 .25rem;
+            color: #fff;
+        }
+
+        .welcome-banner p {
+            margin: 0;
+            opacity: .85;
+            font-size: .9rem;
+        }
+
+        .badge-info {
+            background: rgba(255, 255, 255, .15);
+            border: 1px solid rgba(255, 255, 255, .3);
+            padding: .35rem .85rem;
+            border-radius: var(--radius-full);
+            font-size: .8rem;
+            font-weight: 600;
+        }
+
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .stat-tile {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            padding: 1.25rem 1.5rem;
+            border: 1px solid var(--color-gray-200);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .stat-tile:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .09);
+        }
+
+        .stat-tile .num {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: .3rem;
+        }
+
+        .stat-tile .lbl {
+            font-size: .78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--color-gray-500);
+        }
+
+        .stat-tile.total .num {
+            color: #8b5cf6;
+        }
+
+        .stat-tile.shared .num {
+            color: var(--color-secondary-dark, #0f766e);
+        }
+
+        .stat-tile.dispensed .num {
+            color: var(--color-warning-dark);
+        }
+
+        .stat-tile.tokens .num {
+            color: var(--color-primary);
+        }
+
+        /* Section card */
+        .section-card {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-200);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.1rem 1.5rem;
+            border-bottom: 1px solid var(--color-gray-100);
+            flex-wrap: wrap;
+            gap: .75rem;
+        }
+
+        .section-head h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--color-gray-800);
+        }
+
+        .section-body {
+            padding: 1.25rem 1.5rem;
+        }
+
+        /* Filter */
+        .filter-bar {
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+        }
+
+        .filter-bar select {
+            padding: .4rem .75rem;
+            border: 1px solid var(--color-gray-300);
+            border-radius: var(--radius-md);
+            font-size: .85rem;
+            color: var(--color-gray-700);
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .filter-bar select:focus {
+            outline: none;
+            border-color: #8b5cf6;
+        }
+
+        .btn-refresh {
+            padding: .4rem .85rem;
+            border: 1px solid var(--color-gray-300);
+            border-radius: var(--radius-md);
+            background: #fff;
+            font-size: .85rem;
+            cursor: pointer;
+            color: var(--color-gray-600);
+            transition: all .15s;
+        }
+
+        .btn-refresh:hover {
+            background: var(--color-gray-50);
+        }
+
+        /* Prescription grid */
+        .rx-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .rx-card {
+            border: 1px solid var(--color-gray-200);
+            border-radius: var(--radius-lg);
+            padding: 1.1rem 1.25rem;
+            background: #fff;
+            transition: transform .2s, box-shadow .2s, border-color .2s;
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+        }
+
+        .rx-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .09);
+            border-color: #ddd6fe;
+        }
+
+        .rx-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: .5rem;
+        }
+
+        .rx-card-top h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--color-gray-900);
+        }
+
+        .rx-meta {
+            font-size: .8rem;
+            color: var(--color-gray-500);
+        }
+
+        .rx-details {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: .82rem;
+            color: var(--color-gray-600);
+        }
+
+        .rx-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: .25rem;
+            gap: .5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: .2rem .65rem;
+            border-radius: var(--radius-full);
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            white-space: nowrap;
+        }
+
+        .badge-created {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .badge-shared {
+            background: #ccfbf1;
+            color: #0f766e;
+        }
+
+        .badge-dispensed {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-locked {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-cancelled {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        /* Buttons */
+        .btn-view {
+            padding: .35rem .85rem;
+            border-radius: var(--radius-md);
+            background: #f3e8ff;
+            color: #7c3aed;
+            font-size: .8rem;
+            font-weight: 600;
+            border: 1px solid #ddd6fe;
+            transition: all .15s;
+            text-decoration: none;
+        }
+
+        .btn-view:hover {
+            background: #8b5cf6;
+            color: #fff;
+        }
+
+        .btn-token {
+            padding: .35rem .85rem;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: #fff;
+            font-size: .8rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all .2s;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, .25);
+        }
+
+        .btn-token:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, .35);
+        }
+
+        /* Empty / loading */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--color-gray-400);
+        }
+
+        .empty-state p {
+            font-size: .95rem;
+            margin: 0;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 2.5rem;
+            color: var(--color-gray-400);
+            font-size: .9rem;
+        }
+    </style>
 </head>
-<body class="patient-dashboard">
-    <nav class="navbar">
-        <div class="navbar-inner" style="display: flex; justify-content: space-between; align-items: center;">
-            <div class="nav-brand">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 6v6l4 2"/>
-                </svg>
-                MediSure Vault - Patient Portal
-            </div>
-            <div class="nav-links">
-                <a href="{{ url_for('dashboard') }}" class="active">Dashboard</a>
-                <a href="{{ url_for('logout') }}">Logout</a>
-            </div>
+
+<body>
+
+    <nav class="top-bar">
+        <div class="top-bar-brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+            </svg>
+            MediSure Vault
+        </div>
+        <div class="top-bar-nav">
+            <a href="{{ url_for('patient.dashboard') }}" class="active">Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
         </div>
     </nav>
 
-    <div class="container">
-        <div class="dashboard-header">
+    <div class="page">
+
+        <!-- Welcome banner -->
+        <div class="welcome-banner">
             <div>
                 <h1>Welcome, {{ current_user.full_name }}</h1>
-                <p class="subtitle">Age: {{ patient_profile.age }} | Contact: {{ patient_profile.contact_number }}</p>
-                {% if patient_profile.blood_group %}
-                <p class="subtitle">Blood Group: {{ patient_profile.blood_group }}</p>
-                {% endif %}
+                <p>
+                    {% if patient_profile %}
+                    Age: {{ patient_profile.age }}
+                    {% if patient_profile.blood_group %} &nbsp;·&nbsp; Blood Group: {{ patient_profile.blood_group }}{%
+                    endif %}
+                    {% if patient_profile.contact_number %} &nbsp;·&nbsp; {{ patient_profile.contact_number }}{% endif
+                    %}
+                    {% else %}
+                    Patient Portal
+                    {% endif %}
+                </p>
+            </div>
+            <span class="badge-info">🏥 Patient</span>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-tile total">
+                <div class="num">{{ stats.total }}</div>
+                <div class="lbl">Total Prescriptions</div>
+            </div>
+            <div class="stat-tile shared">
+                <div class="num">{{ stats.shared }}</div>
+                <div class="lbl">Ready to Share</div>
+            </div>
+            <div class="stat-tile dispensed">
+                <div class="num">{{ stats.dispensed }}</div>
+                <div class="lbl">Dispensed</div>
+            </div>
+            <div class="stat-tile tokens">
+                <div class="num">{{ stats.active_tokens }}</div>
+                <div class="lbl">Active Tokens</div>
             </div>
         </div>
 
-        <!-- Quick Stats -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">📋</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="total-prescriptions">0</div>
-                    <div class="stat-label">Total Prescriptions</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">⏳</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="pending-prescriptions">0</div>
-                    <div class="stat-label">Pending</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">✅</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="dispensed-prescriptions">0</div>
-                    <div class="stat-label">Dispensed</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🔑</div>
-                <div class="stat-info">
-                    <div class="stat-value" id="active-tokens">0</div>
-                    <div class="stat-label">Active Tokens</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Generate Access Token Section -->
+        <!-- Prescriptions -->
         <div class="section-card">
-            <h2>🔑 Generate Access Token</h2>
-            <p>Generate time-bound tokens to share your prescriptions with pharmacies securely.</p>
-            
-            <form id="token-generate-form" class="token-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="prescription-select">Select Prescription *</label>
-                        <select id="prescription-select" name="prescription_id" required>
-                            <option value="">Loading prescriptions...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="pharmacy-id">Pharmacy ID *</label>
-                        <input type="text" id="pharmacy-id" name="pharmacy_id" required 
-                               placeholder="Enter pharmacy identifier">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="expires-hours">Token Validity (hours) *</label>
-                        <select id="expires-hours" name="expires_hours" required>
-                            <option value="1">1 hour</option>
-                            <option value="6">6 hours</option>
-                            <option value="12" selected>12 hours</option>
-                            <option value="24">24 hours</option>
-                            <option value="48">48 hours</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>&nbsp;</label>
-                        <button type="submit" class="btn btn-primary">Generate Token</button>
-                    </div>
-                </div>
-            </form>
-
-            <div id="generated-token" class="generated-token" style="display: none;">
-                <h3>✅ Token Generated Successfully!</h3>
-                <div class="token-display">
-                    <code id="token-value"></code>
-                    <button onclick="copyToken()" class="btn btn-small">📋 Copy</button>
-                </div>
-                <p class="token-info">Share this token with the pharmacy. It expires in <span id="token-expiry"></span>.</p>
-            </div>
-        </div>
-
-        <!-- My Prescriptions -->
-        <div class="section-card">
-            <div class="section-header">
-                <h2>📚 My Prescriptions</h2>
-                <div class="filter-controls">
-                    <select id="state-filter" class="filter-select">
+            <div class="section-head">
+                <h2>💊 My Prescriptions</h2>
+                <div class="filter-bar">
+                    <select id="stateFilter">
                         <option value="">All States</option>
-                        <option value="PENDING">Pending</option>
+                        <option value="CREATED">Created</option>
+                        <option value="SHARED">Shared</option>
                         <option value="DISPENSED">Dispensed</option>
                         <option value="LOCKED">Locked</option>
                     </select>
-                    <button onclick="loadPrescriptions()" class="btn btn-small">🔄 Refresh</button>
+                    <button class="btn-refresh"
+                        onclick="loadPrescriptions(document.getElementById('stateFilter').value)">↺ Refresh</button>
                 </div>
             </div>
-            
-            <div id="prescriptions-list" class="prescriptions-list">
-                <div class="loading">Loading prescriptions...</div>
+            <div class="section-body">
+                <div id="rxList">
+                    {% if prescriptions %}
+                    <div class="rx-grid">
+                        {% for p in prescriptions %}
+                        <div class="rx-card">
+                            <div class="rx-card-top">
+                                <h3>{{ p.medication_name }}</h3>
+                                <span class="badge badge-{{ p.state.lower() }}">{{ p.state }}</span>
+                            </div>
+                            <div class="rx-meta">
+                                🩺 Dr. {{ p.doctor.full_name if p.doctor else '—' }}
+                                &nbsp;·&nbsp; 🗓 {{ p.created_at.strftime('%d %b %Y') }}
+                            </div>
+                            <div class="rx-details">
+                                <span><strong>Dosage:</strong> {{ p.dosage }}</span>
+                                <span><strong>Qty:</strong> {{ p.quantity }}</span>
+                            </div>
+                            <div class="rx-footer">
+                                <small style="color:var(--color-gray-400);">ID #{{ p.id }}</small>
+                                <div style="display:flex;gap:.5rem;">
+                                    <a href="{{ url_for('patient.view_prescription', prescription_id=p.id) }}"
+                                        class="btn-view">View</a>
+                                    {% if p.state == 'SHARED' and not p.is_locked() %}
+                                    <button class="btn-token" onclick="quickToken({{ p.id }})">🔑 Get Token</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>No prescriptions yet. Your doctor will create one for you.</p>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
-        <!-- My Access Tokens -->
-        <div class="section-card">
-            <div class="section-header">
-                <h2>🔐 My Access Tokens</h2>
-                <button onclick="loadTokens()" class="btn btn-small">🔄 Refresh</button>
+    </div>
+
+    <!-- Token modal -->
+    <div id="tokenModal"
+        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:none;align-items:center;justify-content:center;">
+        <div
+            style="background:#fff;border-radius:var(--radius-xl);padding:2rem;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+            <h2 style="margin:0 0 .5rem;font-size:1.2rem;">🔑 Access Token Generated</h2>
+            <p style="font-size:.875rem;color:var(--color-gray-500);margin-bottom:1.25rem;">Share this token with your
+                pharmacist. It expires in <strong id="tokenExpiry">15 minutes</strong> and can only be used once.</p>
+            <div
+                style="background:#f3e8ff;border:1px solid #ddd6fe;border-radius:var(--radius-lg);padding:1rem;text-align:center;margin-bottom:1.25rem;">
+                <code id="tokenValue"
+                    style="font-size:1rem;font-weight:700;color:#7c3aed;word-break:break-all;letter-spacing:.05em;"></code>
             </div>
-            
-            <div id="tokens-list" class="tokens-list">
-                <div class="loading">Loading tokens...</div>
+            <div style="display:flex;gap:.75rem;justify-content:flex-end;">
+                <button onclick="copyToken()"
+                    style="padding:.5rem 1rem;border-radius:var(--radius-md);border:1.5px solid #ddd6fe;background:#f3e8ff;color:#7c3aed;font-weight:600;cursor:pointer;">📋
+                    Copy</button>
+                <button onclick="closeModal()"
+                    style="padding:.5rem 1.25rem;border-radius:var(--radius-md);background:#8b5cf6;color:#fff;font-weight:700;border:none;cursor:pointer;">Done</button>
             </div>
         </div>
     </div>
 
-    <!-- Prescription Details Modal -->
-    <div id="prescription-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <h2>Prescription Details</h2>
-            <div id="prescription-details"></div>
-            <div class="modal-actions">
-                <button onclick="closePrescriptionModal()" class="btn btn-secondary">Close</button>
-            </div>
-        </div>
+    <div id="flashMessage" style="display:none;position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;min-width:280px;">
     </div>
 
+    <script src="{{ url_for('static', filename='auth.js') }}"></script>
     <script>
-        const API_BASE = '';
+        let _currentToken = '';
 
-        // Load patient statistics
-        async function loadStats() {
+        async function quickToken(prescriptionId) {
             try {
-                const response = await fetch(`${API_BASE}/api/patient/stats`);
-                if (!response.ok) throw new Error('Failed to load statistics');
-                
-                const data = await response.json();
-                document.getElementById('total-prescriptions').textContent = data.total || 0;
-                document.getElementById('pending-prescriptions').textContent = data.pending || 0;
-                document.getElementById('dispensed-prescriptions').textContent = data.dispensed || 0;
-                document.getElementById('active-tokens').textContent = data.active_tokens || 0;
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
-        }
-
-        // Load prescriptions for prescription selector
-        async function loadPrescriptionSelector() {
-            try {
-                const response = await fetch(`${API_BASE}/api/patient/prescriptions`);
-                if (!response.ok) throw new Error('Failed to load prescriptions');
-                
-                const prescriptions = await response.json();
-                const select = document.getElementById('prescription-select');
-                
-                if (prescriptions.length === 0) {
-                    select.innerHTML = '<option value="">No prescriptions available</option>';
-                    return;
-                }
-
-                select.innerHTML = '<option value="">Select a prescription</option>' +
-                    prescriptions
-                        .filter(p => p.state !== 'LOCKED')
-                        .map(p => `<option value="${p.id}">${p.medication_name} - ${p.dosage} (${p.state})</option>`)
-                        .join('');
-            } catch (error) {
-                console.error('Error loading prescriptions:', error);
-            }
-        }
-
-        // Generate access token
-        document.getElementById('token-generate-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/patient/tokens`, {
+                const res = await fetch(`/patient/generate-token/${prescriptionId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    credentials: 'include'
                 });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    document.getElementById('token-value').textContent = result.token;
-                    document.getElementById('token-expiry').textContent = `${data.expires_hours} hour(s)`;
-                    document.getElementById('generated-token').style.display = 'block';
-                    await loadStats();
-                    await loadTokens();
-                } else {
-                    alert(`❌ Error: ${result.error || 'Failed to generate token'}`);
-                }
-            } catch (error) {
-                console.error('Error generating token:', error);
-                alert('❌ Failed to generate token');
-            }
-        });
+                const data = await res.json();
 
-        // Copy token to clipboard
+                if (res.ok) {
+                    _currentToken = data.token;
+                    document.getElementById('tokenValue').textContent = data.token;
+                    const mins = Math.round((new Date(data.expires_at) - new Date()) / 60000);
+                    document.getElementById('tokenExpiry').textContent = `${mins} minutes`;
+                    document.getElementById('tokenModal').style.display = 'flex';
+                } else {
+                    flashMessage(data.error || 'Could not generate token.', 'error');
+                }
+            } catch {
+                flashMessage('Network error. Please try again.', 'error');
+            }
+        }
+
         function copyToken() {
-            const tokenValue = document.getElementById('token-value').textContent;
-            navigator.clipboard.writeText(tokenValue).then(() => {
-                alert('✅ Token copied to clipboard!');
+            navigator.clipboard.writeText(_currentToken).then(() => {
+                flashMessage('Token copied to clipboard!', 'success');
             });
         }
 
-        // Load prescriptions
-        async function loadPrescriptions() {
-            const state = document.getElementById('state-filter').value;
-            const listDiv = document.getElementById('prescriptions-list');
-            listDiv.innerHTML = '<div class="loading">Loading prescriptions...</div>';
+        function closeModal() {
+            document.getElementById('tokenModal').style.display = 'none';
+            location.reload();
+        }
 
+        // Dynamic filter
+        async function loadPrescriptions(state = '') {
+            const list = document.getElementById('rxList');
+            list.innerHTML = '<div class="loading-state">Loading…</div>';
             try {
-                let url = `${API_BASE}/api/patient/prescriptions`;
-                if (state) url += `?state=${state}`;
-                
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Failed to load prescriptions');
-                
-                const prescriptions = await response.json();
-                
-                if (prescriptions.length === 0) {
-                    listDiv.innerHTML = '<div class="empty-state">No prescriptions found</div>';
+                const url = '/patient/api/prescriptions' + (state ? `?state=${state}` : '');
+                const res = await fetch(url, { credentials: 'include' });
+                const data = await res.json();
+
+                if (!data.length) {
+                    list.innerHTML = '<div class="empty-state"><p>No prescriptions found for this filter.</p></div>';
                     return;
                 }
 
-                listDiv.innerHTML = prescriptions.map(p => `
-                    <div class="prescription-card">
-                        <div class="prescription-header">
-                            <div>
-                                <h3>${p.medication_name}</h3>
-                                <p class="prescription-meta">Doctor: Dr. ${p.doctor_name} | Created: ${new Date(p.created_at).toLocaleDateString()}</p>
-                            </div>
-                            <span class="badge badge-${p.state.toLowerCase()}">${p.state}</span>
-                        </div>
-                        <div class="prescription-details">
-                            <div class="detail-item"><strong>Dosage:</strong> ${p.dosage}</div>
-                            <div class="detail-item"><strong>Quantity:</strong> ${p.quantity}</div>
-                            <div class="detail-item"><strong>ID:</strong> ${p.id}</div>
-                            <div class="detail-item"><strong>Tamper Score:</strong> ${p.tamper_score}/100</div>
-                        </div>
-                        ${p.instructions ? `<div class="prescription-instructions"><strong>Instructions:</strong> ${p.instructions}</div>` : ''}
-                        <div class="prescription-actions">
-                            <button onclick="viewPrescriptionDetails(${p.id})" class="btn btn-small">📋 View Details</button>
-                            ${p.state === 'PENDING' ? `<button onclick="generateTokenFor(${p.id})" class="btn btn-small btn-primary">🔑 Generate Token</button>` : ''}
+                const badgeClass = s => ({ 'CREATED': 'badge-created', 'SHARED': 'badge-shared', 'DISPENSED': 'badge-dispensed', 'LOCKED': 'badge-locked', 'CANCELLED': 'badge-cancelled' }[s] || '');
+                const date = iso => iso ? new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+                list.innerHTML = `<div class="rx-grid">${data.map(p => `
+                <div class="rx-card">
+                    <div class="rx-card-top">
+                        <h3>${p.medication_name}</h3>
+                        <span class="badge ${badgeClass(p.state)}">${p.state}</span>
+                    </div>
+                    <div class="rx-meta">🩺 Dr. ${p.doctor_name} &nbsp;·&nbsp; 🗓 ${date(p.created_at)}</div>
+                    <div class="rx-details">
+                        <span><strong>Dosage:</strong> ${p.dosage}</span>
+                        <span><strong>Qty:</strong> ${p.quantity}</span>
+                    </div>
+                    <div class="rx-footer">
+                        <small style="color:var(--color-gray-400);">ID #${p.id}</small>
+                        <div style="display:flex;gap:.5rem;">
+                            <a href="/patient/prescription/${p.id}" class="btn-view">View</a>
+                            ${p.can_generate_token ? `<button class="btn-token" onclick="quickToken(${p.id})">🔑 Get Token</button>` : ''}
                         </div>
                     </div>
-                `).join('');
-            } catch (error) {
-                console.error('Error loading prescriptions:', error);
-                listDiv.innerHTML = '<div class="error">Failed to load prescriptions</div>';
+                </div>`).join('')}</div>`;
+            } catch {
+                list.innerHTML = '<div class="empty-state"><p>Failed to load. Please refresh.</p></div>';
             }
         }
 
-        // Load access tokens
-        async function loadTokens() {
-            const listDiv = document.getElementById('tokens-list');
-            listDiv.innerHTML = '<div class="loading">Loading tokens...</div>';
-
-            try {
-                const response = await fetch(`${API_BASE}/api/patient/tokens`);
-                if (!response.ok) throw new Error('Failed to load tokens');
-                
-                const tokens = await response.json();
-                
-                if (tokens.length === 0) {
-                    listDiv.innerHTML = '<div class="empty-state">No access tokens generated</div>';
-                    return;
-                }
-
-                listDiv.innerHTML = tokens.map(t => {
-                    const isExpired = new Date(t.expires_at) < new Date();
-                    return `
-                        <div class="token-card ${isExpired ? 'expired' : ''}">
-                            <div class="token-header">
-                                <div>
-                                    <h3>${t.prescription_name}</h3>
-                                    <p class="token-meta">Pharmacy: ${t.pharmacy_id} | Created: ${new Date(t.created_at).toLocaleDateString()}</p>
-                                </div>
-                                <span class="badge ${isExpired ? 'badge-expired' : 'badge-active'}">
-                                    ${isExpired ? 'EXPIRED' : 'ACTIVE'}
-                                </span>
-                            </div>
-                            <div class="token-details">
-                                <div class="detail-item"><strong>Token:</strong> <code>${t.token}</code></div>
-                                <div class="detail-item"><strong>Expires:</strong> ${new Date(t.expires_at).toLocaleString()}</div>
-                            </div>
-                            ${!isExpired ? `<div class="token-actions"><button onclick="revokeToken('${t.token}')" class="btn btn-small btn-danger">🚫 Revoke</button></div>` : ''}
-                        </div>
-                    `;
-                }).join('');
-            } catch (error) {
-                console.error('Error loading tokens:', error);
-                listDiv.innerHTML = '<div class="error">Failed to load tokens</div>';
-            }
-        }
-
-        // View prescription details
-        async function viewPrescriptionDetails(prescriptionId) {
-            try {
-                const response = await fetch(`${API_BASE}/api/prescriptions/${prescriptionId}`);
-                const prescription = await response.json();
-                
-                document.getElementById('prescription-details').innerHTML = `
-                    <div class="prescription-full-details">
-                        <p><strong>Medication:</strong> ${prescription.medication_name}</p>
-                        <p><strong>Dosage:</strong> ${prescription.dosage}</p>
-                        <p><strong>Quantity:</strong> ${prescription.quantity}</p>
-                        <p><strong>Frequency:</strong> ${prescription.frequency || 'N/A'}</p>
-                        <p><strong>Duration:</strong> ${prescription.duration || 'N/A'} days</p>
-                        <p><strong>Doctor:</strong> Dr. ${prescription.doctor_name}</p>
-                        <p><strong>State:</strong> ${prescription.state}</p>
-                        <p><strong>Created:</strong> ${new Date(prescription.created_at).toLocaleString()}</p>
-                        ${prescription.dispensed_at ? `<p><strong>Dispensed:</strong> ${new Date(prescription.dispensed_at).toLocaleString()}</p>` : ''}
-                        ${prescription.instructions ? `<p><strong>Instructions:</strong> ${prescription.instructions}</p>` : ''}
-                    </div>
-                `;
-                
-                document.getElementById('prescription-modal').style.display = 'flex';
-            } catch (error) {
-                console.error('Error loading prescription:', error);
-                alert('Failed to load prescription details');
-            }
-        }
-
-        // Close prescription modal
-        function closePrescriptionModal() {
-            document.getElementById('prescription-modal').style.display = 'none';
-        }
-
-        // Generate token for specific prescription
-        function generateTokenFor(prescriptionId) {
-            document.getElementById('prescription-select').value = prescriptionId;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            document.getElementById('pharmacy-id').focus();
-        }
-
-        // Revoke token
-        async function revokeToken(token) {
-            if (!confirm('Are you sure you want to revoke this access token?')) return;
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/patient/tokens/${token}`, {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    alert('✅ Token revoked successfully');
-                    await loadStats();
-                    await loadTokens();
-                } else {
-                    alert('❌ Failed to revoke token');
-                }
-            } catch (error) {
-                console.error('Error revoking token:', error);
-                alert('❌ Failed to revoke token');
-            }
-        }
-
-        // State filter change
-        document.getElementById('state-filter').addEventListener('change', loadPrescriptions);
-
-        // Initial load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadStats();
-            loadPrescriptionSelector();
-            loadPrescriptions();
-            loadTokens();
-        });
-
-        // Auto-refresh every 60 seconds
-        setInterval(() => {
-            loadStats();
-            loadTokens();
-        }, 60000);
+        document.getElementById('stateFilter').addEventListener('change', e => loadPrescriptions(e.target.value));
     </script>
 </body>
+
 </html>

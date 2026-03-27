@@ -131,8 +131,11 @@ class Prescription(db.Model):
     pharmacy_id = db.Column(db.String(50), nullable=True)  # Pharmacy that dispensed
     
     # Tamper detection
-    tamper_score = db.Column(db.Integer, default=0, nullable=False)
-    tamper_events = db.Column(db.Text, default='[]', nullable=False)  # JSON array of events
+    tamper_score = db.Column(db.Integer, default=100, nullable=False)  # starts at 100
+    tamper_events = db.Column(db.Text, default='[]', nullable=False)   # JSON array
+
+    # Suspicious activity flag — auto-set when tamper_score < 60
+    is_flagged = db.Column(db.Boolean, default=False, nullable=False)
     
     # Hash for integrity verification
     content_hash = db.Column(db.String(64), nullable=False)  # SHA-256 hash
@@ -382,6 +385,10 @@ class AuditLog(db.Model):
     # User and resource tracking
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
     prescription_id = db.Column(db.Integer, db.ForeignKey('prescriptions.id'), nullable=True, index=True)
+
+    # Who performed the action and outcome
+    role   = db.Column(db.String(20), nullable=True)   # DOCTOR / PHARMACIST / PATIENT / SYSTEM
+    status = db.Column(db.String(10), default='SUCCESS', nullable=False)  # SUCCESS / FAILED / WARNING
     
     # Event details (JSON)
     details = db.Column(db.Text, nullable=True)  # JSON object with event-specific data
@@ -414,6 +421,8 @@ class AuditLog(db.Model):
             'timestamp': self.timestamp.isoformat() if self.timestamp else None,
             'user_id': self.user_id,
             'username': self.user.username if self.user else None,
+            'role': self.role,
+            'status': self.status,
             'prescription_id': self.prescription_id,
             'details': json.loads(self.details) if self.details else None,
             'ip_address': self.ip_address,

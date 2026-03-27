@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Prescription - MediSure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f9fafb 0%, #f0f4f8 100%);
+        }
+
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, .95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--color-gray-200);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 64px;
+        }
+
+        .top-bar-brand {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+
+        .top-bar-nav {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .top-bar-nav a {
+            padding: .45rem .9rem;
+            border-radius: var(--radius-lg);
+            font-size: .875rem;
+            font-weight: 500;
+            color: var(--color-gray-600);
+            transition: all .15s;
+        }
+
+        .top-bar-nav a:hover {
+            background: var(--color-primary-50);
+            color: var(--color-primary);
+        }
+
+        .top-bar-nav a.btn-logout {
+            color: var(--color-danger);
+        }
+
+        .top-bar-nav a.btn-logout:hover {
+            background: var(--color-danger-light);
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-size: .85rem;
+            color: var(--color-gray-500);
+            margin-bottom: 1.5rem;
+        }
+
+        .breadcrumb a {
+            color: var(--color-primary);
+            font-weight: 500;
+        }
+
+        .form-card {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-200);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .07);
+            overflow: hidden;
+        }
+
+        .form-card-header {
+            background: linear-gradient(135deg, var(--color-primary) 0%, #1557b0 100%);
+            padding: 1.5rem 2rem;
+            color: #fff;
+        }
+
+        .form-card-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0 0 .25rem;
+            color: #fff;
+        }
+
+        .form-card-header p {
+            margin: 0;
+            opacity: .85;
+            font-size: .875rem;
+        }
+
+        .form-card-body {
+            padding: 2rem;
+        }
+
+        .form-section-title {
+            font-size: .8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--color-gray-400);
+            margin: 1.5rem 0 1rem;
+            padding-bottom: .5rem;
+            border-bottom: 1px solid var(--color-gray-100);
+        }
+
+        .form-section-title:first-child {
+            margin-top: 0;
+        }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media(max-width:560px) {
+            .form-grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: .875rem;
+            font-weight: 600;
+            color: var(--color-gray-700);
+            margin-bottom: .4rem;
+        }
+
+        .form-label .req {
+            color: var(--color-danger);
+            margin-left: 2px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: .6rem .875rem;
+            border: 1.5px solid var(--color-gray-300);
+            border-radius: var(--radius-md);
+            font-size: .9375rem;
+            color: var(--color-gray-900);
+            background: #fff;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(30, 111, 217, .1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        .form-hint {
+            font-size: .78rem;
+            color: var(--color-gray-400);
+            margin-top: .3rem;
+        }
+
+        .error-banner {
+            background: var(--color-danger-light);
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 1.5rem;
+        }
+
+        .error-banner ul {
+            margin: .5rem 0 0 1.2rem;
+            padding: 0;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: .75rem;
+            justify-content: flex-end;
+            margin-top: 1.75rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--color-gray-100);
+            flex-wrap: wrap;
+        }
+
+        .btn-cancel {
+            padding: .6rem 1.25rem;
+            border-radius: var(--radius-lg);
+            border: 1.5px solid var(--color-gray-300);
+            background: #fff;
+            color: var(--color-gray-600);
+            font-size: .9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-cancel:hover {
+            background: var(--color-gray-50);
+            border-color: var(--color-gray-400);
+        }
+
+        .btn-submit {
+            padding: .6rem 1.75rem;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, var(--color-primary), #1557b0);
+            color: #fff;
+            font-size: .9rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all .2s;
+            box-shadow: 0 4px 12px rgba(30, 111, 217, .25);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(30, 111, 217, .35);
+        }
+
+        .btn-submit:disabled {
+            opacity: .65;
+            transform: none;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="top-bar">
+        <div class="top-bar-brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            MediSure Vault
+        </div>
+        <div class="top-bar-nav">
+            <a href="{{ url_for('doctor.dashboard') }}">← Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+        </div>
+    </nav>
+    <div class="page">
+        <div class="breadcrumb">
+            <a href="{{ url_for('doctor.dashboard') }}">Dashboard</a>
+            <span>›</span><span>New Prescription</span>
+        </div>
+        {% if errors %}
+        <div class="error-banner">
+            <strong>Please fix the following errors:</strong>
+            <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        </div>
+        {% endif %}
+        <div id="flashMessage" style="display:none;margin-bottom:1rem;"></div>
+        <div class="form-card">
+            <div class="form-card-header">
+                <h1>📋 New Prescription</h1>
+                <p>Fill in the details below. Fields marked * are required.</p>
+            </div>
+            <div class="form-card-body">
+                <form id="rxForm" method="POST" action="{{ url_for('doctor.create_submit') }}" novalidate>
+                    <div class="form-section-title">Patient</div>
+                    <div class="form-group">
+                        <label for="patient_id" class="form-label">Select Patient <span class="req">*</span></label>
+                        <select id="patient_id" name="patient_id" class="form-select">
+                            <option value="">— Choose a patient —</option>
+                            {% for p in patients %}
+                            <option value="{{ p.id }}" {% if form_data and form_data.patient_id==p.id|string
+                                %}selected{% endif %}>
+                                {{ p.full_name }} ({{ p.username }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if not patients %}
+                        <p class="form-hint" style="color:var(--color-warning-dark);">⚠ No registered patients found.
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-section-title">Medication Details</div>
+                    <div class="form-group">
+                        <label for="medication_name" class="form-label">Medication Name <span
+                                class="req">*</span></label>
+                        <input type="text" id="medication_name" name="medication_name" class="form-input"
+                            placeholder="e.g., Amoxicillin 500mg"
+                            value="{{ form_data.medication_name if form_data else '' }}">
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="dosage" class="form-label">Dosage <span class="req">*</span></label>
+                            <input type="text" id="dosage" name="dosage" class="form-input"
+                                placeholder="e.g., 500mg twice daily"
+                                value="{{ form_data.dosage if form_data else '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="quantity" class="form-label">Quantity <span class="req">*</span></label>
+                            <input type="number" id="quantity" name="quantity" class="form-input" min="1"
+                                placeholder="e.g., 30" value="{{ form_data.quantity if form_data else '' }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="refills_allowed" class="form-label">Refills Allowed</label>
+                        <input type="number" id="refills_allowed" name="refills_allowed" class="form-input" min="0"
+                            max="5" placeholder="0" value="{{ form_data.refills_allowed if form_data else '0' }}"
+                            style="max-width:160px;">
+                        <p class="form-hint">Maximum 5 refills.</p>
+                    </div>
+
+                    <div class="form-section-title">Clinical Notes</div>
+                    <div class="form-group">
+                        <label for="diagnosis" class="form-label">Diagnosis / Reason</label>
+                        <input type="text" id="diagnosis" name="diagnosis" class="form-input"
+                            placeholder="e.g., Bacterial throat infection"
+                            value="{{ form_data.diagnosis if form_data else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="instructions" class="form-label">Instructions / Notes</label>
+                        <textarea id="instructions" name="instructions" class="form-textarea"
+                            placeholder="e.g., Take with food. Complete the full course.">{{ form_data.instructions if form_data else '' }}</textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{{ url_for('doctor.dashboard') }}" class="btn-cancel">Cancel</a>
+                        <button type="submit" id="submitBtn" class="btn-submit">Create Prescription</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='auth.js') }}"></script>
+    <script>
+        const form = document.getElementById('rxForm'), patientEl = document.getElementById('patient_id'), medEl = document.getElementById('medication_name'), dosageEl = document.getElementById('dosage'), qtyEl = document.getElementById('quantity'), submitBtn = document.getElementById('submitBtn');
+        patientEl.addEventListener('change', () => !patientEl.value ? setFieldError(patientEl, 'Please select a patient') : clearFieldError(patientEl));
+        medEl.addEventListener('blur', () => !medEl.value.trim() ? setFieldError(medEl, 'Medication name is required') : clearFieldError(medEl));
+        medEl.addEventListener('input', () => clearFieldError(medEl));
+        dosageEl.addEventListener('blur', () => !dosageEl.value.trim() ? setFieldError(dosageEl, 'Dosage is required') : clearFieldError(dosageEl));
+        dosageEl.addEventListener('input', () => clearFieldError(dosageEl));
+        qtyEl.addEventListener('blur', () => (parseInt(qtyEl.value) <= 0 || !qtyEl.value) ? setFieldError(qtyEl, 'Enter a positive quantity') : clearFieldError(qtyEl));
+        qtyEl.addEventListener('input', () => clearFieldError(qtyEl));
+        form.addEventListener('submit', e => {
+            let ok = true;
+            if (!patientEl.value) { setFieldError(patientEl, 'Please select a patient'); ok = false; }
+            if (!medEl.value.trim()) { setFieldError(medEl, 'Medication name is required'); ok = false; }
+            if (!dosageEl.value.trim()) { setFieldError(dosageEl, 'Dosage is required'); ok = false; }
+            if (!qtyEl.value || parseInt(qtyEl.value) <= 0) { setFieldError(qtyEl, 'Enter a positive quantity'); ok = false; }
+            if (!ok) { e.preventDefault(); flashMessage('Please fix the highlighted errors before submitting.', 'warning'); }
+            else { setLoading(submitBtn, true, 'Create Prescription'); }
+        });
+    </script>
+</body>
+
+</html>
